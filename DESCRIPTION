@@ -9,4 +9,5 @@ License: MIT
 LazyData: true
 Imports:
     httr,
-    lubridate
+    lubridate,
+    stringr
