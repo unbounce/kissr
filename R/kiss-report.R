@@ -25,8 +25,7 @@
 #'                                        "FirstSource", "FirstMedium",
 #'                                        "FirstCampaignName", "FirstCampaignContent", "FirstCampaignTerms",
 #'                                        "FirstReferrer"))
-#'    reportResults <- read.KissReport(report)
-
+#'    reportResults <- read(report)
 #' @export
 KissReport <- function(url, start, end, interval, columnNames) {
   if (!is.character(url) && !httr::is.url(url)) stop("url must be a string or url class")
@@ -47,22 +46,6 @@ KissReport <- function(url, start, end, interval, columnNames) {
     cache = cache,
     columnNames = columnNames),
     class = "KissReport")
-}
-
-# return whatever is stored by cache
-readCache <- function (report, key) {
-  key <- as.cacheKey(key)
-  report$cache[[key]]
-}
-
-# return old value
-writeCache <- function (report, key, value) {
-  key <- as.cacheKey(key)
-
-  old = report$cache[[key]]
-  report$cache[[key]] = value
-
-  invisible(old)
 }
 
 
@@ -130,7 +113,7 @@ read.KissReport <- function(report) {
 
   # resultsLink should now be ready
   print("Report ready, pulling results")
-  results <- as.data.frame(loadResults(report, resultsLink), stringsAsFactors = FALSE)
+  results <- as.data.frame(loadPages(report, resultsLink), stringsAsFactors = FALSE)
   if (!is.null(report$columnNames)) {
     names(results) <- report$columnNames
   }
@@ -138,46 +121,3 @@ read.KissReport <- function(report) {
   results
 }
 
-buildResultPageUrls <- function(urlTemplate, offsets) {
-  matches <- "\\{\\{OFFSET\\}\\}"
-  stringr::str_replace_all(urlTemplate, matches, offsets)
-}
-
-loadPage <- function (resultUrl, report) {
-  headers <- c(authorizationHeader(), jsonHeader())
-  requestKey = c(resultUrl, headers)
-  response <- readCache(report, requestKey)
-  if (is.null(response)) {
-    response <- httr::GET(resultUrl, httr::add_headers(headers))
-    writeCache(report, requestKey, response)
-  }
-  results <- jsonlite::fromJSON(httr::content(response, "text"))
-
-  results$data[,-1]
-}
-
-loadResults <- function (report, resultsUrl) {
-  headers <- c(authorizationHeader(), jsonHeader())
-  requestKey = c(resultsUrl, headers)
-
-  response <- readCache(report, requestKey)
-  if (is.null(response)) {
-    response <- httr::GET(resultsUrl, httr::add_headers(headers))
-    writeCache(report, requestKey, response)
-  }
-  results <- jsonlite::fromJSON(httr::content(response, "text"))
-
-  totalResults <- results$pagination$total
-  resultsPerPage <- results$pagination$limit
-
-  resultsUrlTemplate <- stringr::str_c(resultsUrl,
-                                       "?limit=", resultsPerPage, "\u0026offset={{OFFSET}}")
-
-
-  resultsUrls <- buildResultPageUrls(urlTemplate = resultsUrlTemplate,
-                                     offsets = seq(from=0,
-                                                   to=totalResults,
-                                                   by=resultsPerPage))
-
-  do.call(rbind, lapply(resultsUrls, loadPage, report=report))
-}

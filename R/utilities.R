@@ -14,17 +14,82 @@ as.list.Interval <- function(interval) {
         end_date = lubridate::int_end(interval))
 }
 
+# convert dates to timestamps
 as.timestamp <- function(date) {
   strftime(date, format = "%Y-%m-%dT%H:%M:%S%z")
 }
 
-#` Format an httr::url to a simple string
+# Format an httr::url to a simple string
 format.url <- function(url) {
   httr::build_url(x)
 }
 
+# generate a cache key from an object
 as.cacheKey <- function(object) {
   if (!is.character(object)) object <- sapply(object, format)
 
   paste0(object, collapse=":")
+}
+
+# return whatever is stored by cache
+readCache <- function (object, key) {
+  key <- as.cacheKey(key)
+  object$cache[[key]]
+}
+
+# return old value
+writeCache <- function (object, key, value) {
+  key <- as.cacheKey(key)
+
+  old = object$cache[[key]]
+  object$cache[[key]] = value
+
+  invisible(old)
+}
+
+# Build a set of urls matching all the offsets from the url template
+buildPaginationUrls <- function(urlTemplate, offsets) {
+  matches <- "\\{\\{OFFSET\\}\\}"
+  stringr::str_replace_all(urlTemplate, matches, offsets)
+}
+
+# load data from a page
+loadPage <- function (url, object) {
+  headers <- c(authorizationHeader(), jsonHeader())
+  requestKey = c(url, headers)
+  response <- readCache(object, requestKey)
+  if (is.null(response)) {
+    response <- httr::GET(url, httr::add_headers(headers))
+    writeCache(object, requestKey, response)
+  }
+  results <- jsonlite::fromJSON(httr::content(response, "text"))
+
+  results$data[,-1]
+}
+
+# Load all data from a series of pages
+loadPages <- function (object, url) {
+  headers <- c(authorizationHeader(), jsonHeader())
+  requestKey = c(url, headers)
+
+  response <- readCache(object, requestKey)
+  if (is.null(response)) {
+    response <- httr::GET(url, httr::add_headers(headers))
+    writeCache(object, requestKey, response)
+  }
+  pages <- jsonlite::fromJSON(httr::content(response, "text"))
+
+  totalItems <- pages$pagination$total
+  itemsPerPage <- pages$pagination$limit
+
+  urlTemplate <- stringr::str_c(url,
+                                       "?limit=", itemsPerPage, "\u0026offset={{OFFSET}}")
+
+
+  urls <- buildPaginationUrls(urlTemplate = urlTemplate,
+                                     offsets = seq(from=0,
+                                                   to=totalItems,
+                                                   by=itemsPerPage))
+
+  do.call(rbind, lapply(urls, loadPage, object=object))
 }
