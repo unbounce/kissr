@@ -82,14 +82,22 @@ loadPages <- function (object, url) {
   totalItems <- pages$pagination$total
   itemsPerPage <- pages$pagination$limit
 
-  urlTemplate <- stringr::str_c(url,
-                                       "?limit=", itemsPerPage, "\u0026offset={{OFFSET}}")
+  if(totalItems > 0) {
+    urlTemplate <- stringr::str_c(url,
+                                         "?limit=", itemsPerPage, "\u0026offset={{OFFSET}}")
 
 
-  urls <- buildPaginationUrls(urlTemplate = urlTemplate,
-                                     offsets = seq(from=0,
-                                                   to=totalItems,
-                                                   by=itemsPerPage))
+    urls <- buildPaginationUrls(urlTemplate = urlTemplate,
+                                       offsets = seq(from=0,
+                                                     to=totalItems,
+                                                     by=itemsPerPage))
 
-  do.call(rbind, lapply(urls, loadPage, object=object))
+    result <- do.call(rbind, lapply(urls, loadPage, object=object))
+  } else if (is.null(object$columnNames)) {
+    result <- data.frame(product_id=c(), account_id=c(), report_type=c(), name=c(), created_at=c(), links=c())
+  } else {
+    result <- setNames(data.frame(matrix(ncol=length(object$columnNames), nrow=0)),
+                        object$columnNames)
+  }
+  return(result)
 }

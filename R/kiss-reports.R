@@ -57,7 +57,7 @@ read.KissReports <- function(reports) {
   # Get list of reports
   links  <- jsonlite::fromJSON(httr::content(response, "text"))$links
 
-  reportsLink <- with(result, links[links$name == "First", "href"])
+  reportsLink <- links[links$name == "First", "href"]
   print("Getting all reports")
   results <- as.data.frame(loadPages(reports, reportsLink), stringsAsFactors = FALSE)
 
