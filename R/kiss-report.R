@@ -88,13 +88,12 @@ read.KissReport <- function(report) {
 
   resultsLink <- NULL
   repeat {
-    # Wait 15 seconds for report to complete
-    Sys.sleep(15)
-
     print("Checking status of report")
     requestKey <- c(statusLink, headers)
     response <- readCache(report, requestKey)
     if (is.null(response)) {
+      # Wait 15 seconds for report to complete
+      Sys.sleep(15)
       response <- httr::GET(statusLink, httr::add_headers(headers))
     }
     httr::stop_for_status(response)
