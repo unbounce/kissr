@@ -117,6 +117,11 @@ read.KissReport <- function(report) {
     names(results) <- report$columnNames
   }
 
-  results
+  # Workaround for http://stackoverflow.com/questions/28653736/how-to-use-namespaced-function-with-dplyrmutate-each
+  local_try_convert_time <- kissr::try_convert_time
+  # TODO: For some reason this is while try_convert_time is generating the right data
+  # the resultant dataframe loses the class for the date columns
+  map_dates_results <- dplyr::mutate_each_(results, dplyr::funs("local_try_convert_time"), names(results))
+  map_dates_results
 }
 

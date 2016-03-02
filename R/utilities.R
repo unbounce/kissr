@@ -101,3 +101,24 @@ loadPages <- function (object, url) {
   }
   return(result)
 }
+
+# We only support a specific format returned by KissMetrics, so we'll use
+# lubridate::fast_strptime instead of parse_date_time.
+# Take a character vector, and if we think it is a time that can be parsed by
+# format we'll return a vector of times, if it can't be converted (any of the
+# non-NA elements fail to parse) we return the original vector
+try_convert_time <- function(char_vector, formats = "%Y-%m-%d %H:%M:%S") {
+  result <- char_vector
+
+  timezone <- Sys.getenv("FROM_TIMEZONE")
+  if(is.na(timezone)) timezone <- "UTC"
+
+  converted <- tryCatch(
+    lubridate::fast_strptime(char_vector, format = formats, tz = timezone),
+    error = function(e) char_vector
+  )
+  if( isTRUE(all.equal(is.na(converted), is.na(char_vector)))) {
+    result <-with_tz(converted, "UTC")
+  }
+  result
+}
