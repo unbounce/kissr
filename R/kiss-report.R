@@ -117,11 +117,12 @@ read.KissReport <- function(report) {
     names(results) <- report$columnNames
   }
 
-  # Workaround for http://stackoverflow.com/questions/28653736/how-to-use-namespaced-function-with-dplyrmutate-each
-  local_try_convert_time <- kissr::try_convert_time
-  # TODO: For some reason this is while try_convert_time is generating the right data
-  # the resultant dataframe loses the class for the date columns
-  map_dates_results <- dplyr::mutate_each_(results, dplyr::funs("local_try_convert_time"), names(results))
+  # We don't necessarily want the times in the timezone KM returns them in.
+  # Use try_convert_time to see if any of the columns are filled with times as
+  # strings. If so then convert them to POSIX.ct classes with the timezone data
+  # from FROM_TIMEZONE. try_convert_time will then force the UTC timezone for
+  # all returned time values.
+  map_dates_results <- dplyr::mutate_each_(results, dplyr::funs(try_convert_time), names(results))
   map_dates_results
 }
 
