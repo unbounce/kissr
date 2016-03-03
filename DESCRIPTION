@@ -10,4 +10,5 @@ LazyData: true
 Imports:
     httr,
     lubridate,
-    stringr
+    stringr,
+    dplyr
