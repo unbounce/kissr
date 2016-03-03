@@ -110,7 +110,7 @@ loadPages <- function (object, url) {
 try_convert_time <- function(char_vector, formats = "%Y-%m-%d %H:%M:%S") {
   result <- char_vector
 
-  timezone <- Sys.getenv("FROM_TIMEZONE")
+  timezone <- Sys.getenv("KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME")
   if(is.na(timezone)) timezone <- "UTC"
 
   converted <- tryCatch(
