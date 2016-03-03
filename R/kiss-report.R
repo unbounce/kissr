@@ -55,6 +55,25 @@ KissReport <- function(url, start, end, interval, columnNames) {
 #' returning everything in a data frame. Please note this is a synchronous
 #' function that can take quite some time to complete.
 #'
+#' NOTE:KissMetrics returns times in the time zone the product is configured in.
+#' If you would like to change the times to be in UTC you can specify the Time
+#' Zone Name used by KissMetrics in the
+#' KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME env var and this will return
+#' all times translated back to UTC from that timezone.
+#' @examples
+#'    Sys.setenv(KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME="America/Vancouver")
+#'    reportUrl <- "https://query.kissmetrics.com/v2/products/6581c29e-ab13-1030-97f2-22000a91b1a1/reports/1c564450-3586-0133-85e2-22000a9a8afc/run"
+#'    report <- KissReport(reportUrl,
+#'                        interval = lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02")),
+#'                        columnNames = c("KM_Email", "KM_FirstUserId", "FirstVisitDate",
+#'                                        "FirstSource", "FirstMedium",
+#'                                        "FirstCampaignName", "FirstCampaignContent", "FirstCampaignTerms",
+#'                                        "FirstReferrer"))
+#'    reportResults <- read(report)
+#'    # All times from KissMetrics will be treated as if they are in America/Vancouver
+#'    # time while the timez in reportResults will be in UTC (so 7 or 8 hours later
+#'    # depending on DST)
+#'
 #' @return  A \code{data.frame} containing all the data in the report
 #' @export
 read.KissReport <- function(report) {
