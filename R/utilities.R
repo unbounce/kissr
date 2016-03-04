@@ -114,11 +114,16 @@ try_convert_time <- function(char_vector, formats = "%Y-%m-%d %H:%M:%S") {
   if(is.na(timezone)) timezone <- "UTC"
 
   converted <- tryCatch(
-    lubridate::fast_strptime(char_vector, format = formats, tz = timezone),
+    lubridate::with_tz(
+        lubridate::fast_strptime(char_vector, format = formats, tz = timezone),
+      "UTC"),
     error = function(e) char_vector
   )
-  if( isTRUE(all.equal(is.na(converted), is.na(char_vector)))) {
-    result <-with_tz(converted, "UTC")
+  # If every non NA (and there must be non NAs) in the char vector can be converted to time then return
+  # converted, otherwise return char_vector
+  if( any(!is.na(char_vector)) &&
+      isTRUE(all.equal(is.na(converted), is.na(char_vector)))) {
+    result <- converted
   }
   result
 }
