@@ -60,8 +60,12 @@ loadPage <- function (url, object) {
   response <- readCache(object, requestKey)
   if (is.null(response)) {
     response <- httr::GET(url, httr::add_headers(headers))
+    # TODO: If response is a 40x or 50x then we don't want to cache
+    #       instead we should retry some number of times (perhaps with 5 second delay)
+    #       Idea - use httr::stop_for_status(response)
     writeCache(object, requestKey, response)
   }
+  # TODO: Put this in a try catch - if error we need to remove from cache
   results <- jsonlite::fromJSON(httr::content(response, "text"))
 
   results$data[,-1]
@@ -74,9 +78,13 @@ loadPages <- function (object, url) {
 
   response <- readCache(object, requestKey)
   if (is.null(response)) {
+    # TODO: If response is a 40x or 50x then we don't want to cache
+    #       instead we should retry some number of times (perhaps with 5 second delay)
+    #       Idea - use httr::stop_for_status(response)
     response <- httr::GET(url, httr::add_headers(headers))
     writeCache(object, requestKey, response)
   }
+  # TODO: Put this in a try catch - if error we need to remove from cache
   pages <- jsonlite::fromJSON(httr::content(response, "text"))
 
   totalItems <- pages$pagination$total

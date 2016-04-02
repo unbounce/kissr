@@ -107,6 +107,9 @@ read.KissReport <- function(report) {
 
   resultsLink <- NULL
   repeat {
+    # TODO: The interior of this loop should be in a try catch, so if the result
+    #       of our report cache fails  we just try again - to make they try catch
+    #       smaller we could just wrap the jsonlite::fromJSON line
     print("Checking status of report")
     requestKey <- c(statusLink, headers)
     response <- readCache(report, requestKey)
@@ -144,4 +147,3 @@ read.KissReport <- function(report) {
   map_dates_results <- dplyr::mutate_each_(results, dplyr::funs(try_convert_time), names(results))
   map_dates_results
 }
-
