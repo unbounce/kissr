@@ -24,6 +24,36 @@ format.url <- function(url) {
   httr::build_url(x)
 }
 
+# Read data from a URL - will retry MAX_RETRY_COUNT times if response code isn't
+# a 200
+readUrl <- function(url, cacheObject) {
+  headers <- c(authorizationHeader(), jsonHeader())
+  requestKey = c(url, headers)
+  response <- readCache(cacheObject, requestKey)
+
+  if (is.null(response)) {
+    maxTries <- ifelse(is.na(Sys.getenv("MAX_RETRY_COUNT")),
+                       Sys.getenv("MAX_RETRY_COUNT"),
+                       10)
+    tries <- 0
+    repeat {
+      response <- httr::GET(url, httr::add_headers(headers))
+      tries <- tries + 1
+      if(!httr::http_error(response)) {
+        writeCache(cacheObject, requestKey, response)
+        break
+      }
+      else if (tries >= maxTries) {
+        stop("Reached maximum retry count for url:", url, "\n",
+                         "Server Response:", httr::message_for_status(response))
+      }
+      Sys.sleep(2)
+    }
+  }
+
+  response
+}
+
 # generate a cache key from an object
 as.cacheKey <- function(object) {
   if (!is.character(object)) object <- sapply(object, format)
@@ -50,48 +80,48 @@ writeCache <- function (object, key, value) {
 # Build a set of urls matching all the offsets from the url template
 buildPaginationUrls <- function(urlTemplate, offsets) {
   matches <- "\\{\\{OFFSET\\}\\}"
-  stringr::str_replace_all(urlTemplate, matches, offsets)
+  stringr::str_replace_all(urlTemplate,
+                           matches,
+                           format(offsets,
+                                  scientific=FALSE,
+                                  trim=TRUE))
 }
 
 # load data from a page
 loadPage <- function (url, object) {
-  headers <- c(authorizationHeader(), jsonHeader())
-  requestKey = c(url, headers)
-  response <- readCache(object, requestKey)
-  if (is.null(response)) {
-    response <- httr::GET(url, httr::add_headers(headers))
-    writeCache(object, requestKey, response)
-  }
-  results <- jsonlite::fromJSON(httr::content(response, "text"))
-
-  results$data[,-1]
+  # Provide a status update
+  cat(stringr::str_extract(url,"offset=\\d+"), "|")
+  results <- tryCatch( {
+        response <- readUrl(url, object)
+        results <- jsonlite::fromJSON(httr::content(response, "text"))
+        results$data[,-1]
+      },
+      error = function(e) { e }
+    )
+  results
 }
 
 # Load all data from a series of pages
 loadPages <- function (object, url) {
-  headers <- c(authorizationHeader(), jsonHeader())
-  requestKey = c(url, headers)
-
-  response <- readCache(object, requestKey)
-  if (is.null(response)) {
-    response <- httr::GET(url, httr::add_headers(headers))
-    writeCache(object, requestKey, response)
-  }
+  response <- readUrl(url, object)
   pages <- jsonlite::fromJSON(httr::content(response, "text"))
 
   totalItems <- pages$pagination$total
-  itemsPerPage <- pages$pagination$limit
+  itemsPerPage <- 1000
+
+  print(paste("Loading", ceiling(totalItems/itemsPerPage), "pages:",
+              format(itemsPerPage, scientific=FALSE), "results per page."))
 
   if(totalItems > 0) {
-    urlTemplate <- stringr::str_c(url,
-                                         "?limit=", itemsPerPage, "\u0026offset={{OFFSET}}")
+    # Rip out any existing query params
+    urlTemplate <- stringr::str_c(stringr::str_split(url, "\\?", 2)[[1]][1],
+                                         "?limit=", format(itemsPerPage, scientific=FALSE), "\u0026offset={{OFFSET}}")
 
 
     urls <- buildPaginationUrls(urlTemplate = urlTemplate,
                                        offsets = seq(from=0,
-                                                     to=totalItems,
+                                                     to=totalItems - 1,
                                                      by=itemsPerPage))
-
     result <- do.call(rbind, lapply(urls, loadPage, object=object))
   } else if (is.null(object$columnNames)) {
     result <- data.frame(product_id=c(), account_id=c(), report_type=c(), name=c(), created_at=c(), links=c())

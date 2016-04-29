@@ -39,20 +39,7 @@ KissReports <- function() {
 #' @export
 read.KissReports <- function(reports) {
   # Make request
-  headers <- c(authorizationHeader(), jsonHeader())
-  body <- ""
-  encoding <- "json"
-
-  requestKey <- c(reports$url, headers, body, encoding)
-  response <- readCache(reports, requestKey)
-  if (is.null(response)) {
-    response <- httr::GET(reports$url,
-                           encode = encoding,
-                           httr::add_headers(.headers = headers))
-
-    httr::stop_for_status(response)
-    writeCache(reports, requestKey, response)
-  }
+  response <- readUrl(reports$url, reports)
 
   # Get list of reports
   links  <- jsonlite::fromJSON(httr::content(response, "text"))$links
