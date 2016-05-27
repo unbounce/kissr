@@ -4,47 +4,60 @@
 #'
 #' This is a constructor function.
 #'
-#' @param url An HREF to the report in KM as described by
-#'   \link{http://support.kissmetrics.com/api-update.html}
+#' @param productId The product id to run the report against
+#' @param segment - a \link{KissSegment} specifying the segment to run the report
+#'   against.
+#' @param calculations - a list of \link{KissCalculation} objects representing
+#'   the columns of the report - any calculations with type of
+#'   \code{first_date_in_range} or \code{last_date_in_range} will be returned as
+#'   a \code{POSIXct} class when report is read. Anything else will be a
+#'   \code{character}.
 #' @param interval The time range you want the report run for as a
 #'   \code{lubridate::interval}
 #'   (optional - can specify start and end instead)
-#' @param start The start date and time for the report (optional - can specify
-#'   an interval instead)
-#' @param end The end date and time for the report (optional - can specify an
-#'   interval instead)
-#' @param columnNames The names of columns for any produced reports
 #' @return If url is a valid string or url (from \code{httr::url}) and the start
 #'   and end dates are specified this returns a new KissReport object that can
 #'   be passed to the read S3 generic
 #' @examples
-#'    reportUrl <- "https://query.kissmetrics.com/v2/products/6581c29e-ab13-1030-97f2-22000a91b1a1/reports/1c564450-3586-0133-85e2-22000a9a8afc/run"
-#'    report <- KissReport(reportUrl,
-#'                        interval = lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02")),
-#'                        columnNames = c("KM_Email", "KM_FirstUserId", "FirstVisitDate",
-#'                                        "FirstSource", "FirstMedium",
-#'                                        "FirstCampaignName", "FirstCampaignContent", "FirstCampaignTerms",
-#'                                        "FirstReferrer"))
+#'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
+#'    rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value"))
+#'    segment <- KissSegment(type = "and",
+#'                 rules = rules,
+#'                 defaultInterval = reportDates)
+#'    report <- KissReport(productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
+#'                 segment = segment,
+#'                 calculations = list(
+#'                   KissCalculation.Event(label = "First time of visited site",
+#'                      eventId = 6,
+#'                      type = "first_date_in_range",
+#'                      negate = FALSE,
+#'                      frequencyValue = 1,
+#'                      frequencyOccurance = "at_least")),
+#'                 interval = reportDates
+#'                 )
 #'    reportResults <- read(report)
 #' @export
-KissReport <- function(url, start, end, interval, columnNames) {
-  if (!is.character(url) && !httr::is.url(url)) stop("url must be a string or url class")
-  if (is.null(interval)) {
-    if (!lubridate::is.Date(start)) stop("If not creating with an interval, start must be a date")
-    if (!lubridate::is.Date(end)) stop("If not creating with an interval, end must be a date")
-    interval <- interval(start, end)
-  } else {
-    if (!lubridate::is.interval(interval)) stop("interval must be a valid interval")
+KissReport <- function(productId, segment, calculations, interval) {
+  if (!is.character(productId)) stop("productId must be a string")
+  if (!lubridate::is.interval(interval)) stop("interval must be a valid interval")
+  if (!is(segment, "KissSegment"))  stop("segment must be a KissSegment object")
+  if (!is.list(calculations))  stop("calculations must be a list")
+  if ( length(calculations) > 0 & all(!sapply(calculations, is, "KissCalculation"))) {
+    stop("calculations must contain only KissCalculations")
   }
 
   cache <- new.env(parent = emptyenv())
 
-  url <- httr::parse_url(url)
+  urlTemplate <- "https://query.kissmetrics.com/v2/products/{{product_id}}/reports/people_search"
+
+  url <- httr::parse_url(replacePlaceholder(urlTemplate, "\\{\\{product_id\\}\\}", productId))
   structure(list(
+    productId = productId,
     url = url,
     interval = interval,
     cache = cache,
-    columnNames = columnNames),
+    segment = segment,
+    calculations = calculations),
     class = "KissReport")
 }
 
@@ -55,31 +68,35 @@ KissReport <- function(url, start, end, interval, columnNames) {
 #' returning everything in a data frame. Please note this is a synchronous
 #' function that can take quite some time to complete.
 #'
-#' NOTE:KissMetrics returns times in the time zone the product is configured in.
-#' If you would like to change the times to be in UTC you can specify the Time
-#' Zone Name used by KissMetrics in the
-#' KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME env var and this will return
-#' all times translated back to UTC from that timezone.
+#' NOTE:KissMetrics returns times in UTC
 #' @examples
-#'    Sys.setenv(KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME="America/Vancouver")
-#'    reportUrl <- "https://query.kissmetrics.com/v2/products/6581c29e-ab13-1030-97f2-22000a91b1a1/reports/1c564450-3586-0133-85e2-22000a9a8afc/run"
-#'    report <- KissReport(reportUrl,
-#'                        interval = lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02")),
-#'                        columnNames = c("KM_Email", "KM_FirstUserId", "FirstVisitDate",
-#'                                        "FirstSource", "FirstMedium",
-#'                                        "FirstCampaignName", "FirstCampaignContent", "FirstCampaignTerms",
-#'                                        "FirstReferrer"))
+#'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
+#'    rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value"))
+#'    segment <- KissSegment(type = "and",
+#'                 rules = rules,
+#'                 defaultInterval = reportDates)
+#'    report <- KissReport(productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
+#'                 segment = segment,
+#'                 calculations = list(
+#'                   KissCalculation.Event(label = "First time of visited site",
+#'                      eventId = 6,
+#'                      type = "first_date_in_range",
+#'                      negate = FALSE,
+#'                      frequencyValue = 1,
+#'                      frequencyOccurance = "at_least")),
+#'                 interval = reportDates
+#'                 )
 #'    reportResults <- read(report)
-#'    # All times from KissMetrics will be treated as if they are in America/Vancouver
-#'    # time while the timez in reportResults will be in UTC (so 7 or 8 hours later
-#'    # depending on DST)
 #'
-#' @return  A \code{data.frame} containing all the data in the report
+#' @return  A \code{data.frame} containing all the data in the report. The
+#'    columns in the data frame will be "identity" + any columns defined by the
+#'    report's calculations. Any time values will be converted to POSIXct and
+#'    will be in UTC.
 #' @export
 read.KissReport <- function(report) {
   # Make request
   headers <- c(authorizationHeader(), jsonHeader())
-  body <- lapply(as.list(report$interval), as.timestamp)
+  body <- asJson(report)
   encoding <- "json"
 
   requestKey <- c(report$url, headers, body, encoding)
@@ -132,16 +149,75 @@ read.KissReport <- function(report) {
   # resultsLink should now be ready
   print("Report ready, pulling results")
   results <- as.data.frame(loadPages(report, resultsLink), stringsAsFactors = FALSE)
-  if (!is.null(report$columnNames)) {
-    names(results) <- report$columnNames
+
+  # Set the names of the results to be "identity" + the labels used for the report calculations.
+  # We have to handle this a little differently if the report generates no results.
+  if(ncol(results) == 0) {
+    results <- as.data.frame(setNames(replicate(length(names(report)), character(0)), names(report)))
+  } else {
+    names(results) <- names(report)
   }
 
-  # We don't necessarily want the times in the timezone KM returns them in.
-  # Use try_convert_time to see if any of the columns are filled with times as
-  # strings. If so then convert them to POSIX.ct classes with the timezone data
-  # from FROM_TIMEZONE. try_convert_time will then force the UTC timezone for
-  # all returned time values.
-  map_dates_results <- dplyr::mutate_each_(results, dplyr::funs(try_convert_time), names(results))
-  map_dates_results
+  # KissMetrics returns times as unix timestamps (seconds from origin in UTC)
+  # Update every column generated from a calculation with type matching *_date_*
+  # to be POSIX.ct time.
+  convertTime <- function(x) {
+    as.POSIXct(as.numeric(x), origin = "1970-01-01", tz = "UTC")
+  }
+  results <- dplyr::mutate_each(results,
+                                dplyr::funs(convertTime),
+                                which(reportCalculationClasses(report) == "timestamp"))
+
+  results
 }
 
+#' Convert a KissCalculation into a json structure understood by the KM API.
+#' Used internally by read.KissReport but also available for external
+#' introspection
+#' @export
+asJson.KissReport <- function(report) {
+  template <- '
+  {
+    "sort":"0",
+    "order":"asc",
+    "product_id":"{{product_id}}",
+    "query_params": {
+      "type":"group",
+      "filter":{{segment}},
+      "defaultCalculationDateRange":{{defaultCalculationDateRange}},
+      "calculations":[{{calculations}}]
+    }
+  }'
+
+  json <- template
+  json <- replacePlaceholder(json, "\\{\\{product_id\\}\\}", report$productId)
+  json <- replacePlaceholder(json, "\\{\\{segment\\}\\}", asJson(report$segment))
+  json <- replacePlaceholder(json, "\\{\\{defaultCalculationDateRange\\}\\}", jsonlite::toJSON(makeKMDateRange(report$interval), auto_unbox = TRUE))
+  calculationsJson <- lapply(report$calculations, asJson)
+  json <- replacePlaceholder(json, "\\{\\{calculations\\}\\}", paste(calculationsJson, collapse=","))
+  return(json)
+}
+
+#' Get the column names for a report
+#' @example
+#'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
+#'    rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value"))
+#'    segment <- KissSegment(type = "and",
+#'                 rules = rules,
+#'                 defaultInterval = reportDates)
+#'    report <- KissReport(productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
+#'                 segment = segment,
+#'                 calculations = list(
+#'                   KissCalculation.Event(label = "First time of visited site",
+#'                      eventId = 6,
+#'                      type = "first_date_in_range",
+#'                      negate = FALSE,
+#'                      frequencyValue = 1,
+#'                      frequencyOccurance = "at_least")),
+#'                 interval = reportDates
+#'                 )
+#'    cat("Generating report with columns: ", paste(names(report), collapse=" | "))
+#' @export
+names.KissReport <- function(report) {
+  c('identity', sapply(report$calculations, function(calculation) calculation$label))
+}
