@@ -94,6 +94,15 @@ loadPage <- function (url, object) {
   results <- tryCatch( {
         response <- readUrl(url, object)
         results <- jsonlite::fromJSON(httr::content(response, "text"))
+        # TODO: Map different report types to different data extractors.
+        #       Inspect the structure of results and based off that structure
+        #       pass the result through one of 2 data handlers:
+        #       PassThroughDataHandler - this just returns the data as is making
+        #         no changes.
+        #       ColumnExtractionDataHandler - this extracts the values from the
+        #         lists in 'columns' into individual vectors, drops the
+        #         'columns' column, and appends the extracted vectors as new
+        #         columns to the data frame.
         results$data[,-1]
       },
       error = function(e) { e }
