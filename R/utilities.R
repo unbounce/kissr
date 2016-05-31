@@ -94,16 +94,20 @@ loadPage <- function (url, object) {
   results <- tryCatch( {
         response <- readUrl(url, object)
         results <- jsonlite::fromJSON(httr::content(response, "text"))
-        # TODO: Map different report types to different data extractors.
-        #       Inspect the structure of results and based off that structure
-        #       pass the result through one of 2 data handlers:
-        #       PassThroughDataHandler - this just returns the data as is making
-        #         no changes.
-        #       ColumnExtractionDataHandler - this extracts the values from the
-        #         lists in 'columns' into individual vectors, drops the
-        #         'columns' column, and appends the extracted vectors as new
-        #         columns to the data frame.
+
+        # New people_search_v3 reports don't automatically output a single
+        # matrix with the KM identifier, email and attributes.
+        # Instead, it outputs a list with 3 elements: the KM identifier,
+        # the email/UUID and the other columns
+        if(length(results) == 5){
+          resultsColumns <- matrix(unlist(results$data$columns),
+                                   ncol = length(results$data$columns[[1]]),
+                                   byrow = TRUE)
+          results$data <- cbind(results$data$identity,
+                                resultsColumns)
+        } else {
         results$data[,-1]
+        }
       },
       error = function(e) { e }
     )
