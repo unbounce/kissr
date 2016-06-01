@@ -87,32 +87,54 @@ buildPaginationUrls <- function(urlTemplate, offsets) {
                                   trim=TRUE))
 }
 
-# load data from a page
+# Pull out Kissmetrics results as matrix
+GetDataFromReport <- function(pulledReport) {
+  # New people_search_v3 reports don't automatically output a single
+  # matrix with the KM identifier, email and attributes.
+  # Instead, it outputs a list with 3 elements: the KM identifier,
+  # the email/UUID and the other columns
+  reportColumnNames <- names(pulledReport$data)
+  if(sum(reportColumnNames %in% c("identity","columns")) == 2){
+    resultsColumns <- matrix(unlist(pulledReport$data$columns),
+                             ncol = length(pulledReport$data$columns[[1]]),
+                             byrow = TRUE)
+    pulledReport$data <- cbind(pulledReport$data$identity,
+                          resultsColumns)
+  } else {
+    pulledReport$data <- pulledReport$data[,-1]
+  }
+  return(pulledReport$data)
+}
+
+# # load data from a page
+# loadPage <- function (url, object) {
+#   # Provide a status update
+#   cat(stringr::str_extract(url,"offset=\\d+"), "|")
+#   results <- tryCatch( {
+#         response <- readUrl(url, object)
+#         results <- jsonlite::fromJSON(httr::content(response, "text"))
+#         results$data <- GetDataFromReport(results)
+#
+#       },
+#       error = function(e) { e }
+#     )
+#   results
+# }
+
 loadPage <- function (url, object) {
   # Provide a status update
   cat(stringr::str_extract(url,"offset=\\d+"), "|")
   results <- tryCatch( {
-        response <- readUrl(url, object)
-        results <- jsonlite::fromJSON(httr::content(response, "text"))
-
-        # New people_search_v3 reports don't automatically output a single
-        # matrix with the KM identifier, email and attributes.
-        # Instead, it outputs a list with 3 elements: the KM identifier,
-        # the email/UUID and the other columns
-        if(length(results) == 5){
-          resultsColumns <- matrix(unlist(results$data$columns),
-                                   ncol = length(results$data$columns[[1]]),
-                                   byrow = TRUE)
-          results$data <- cbind(results$data$identity,
-                                resultsColumns)
-        } else {
-        results$data[,-1]
-        }
-      },
-      error = function(e) { e }
-    )
+    response <- readUrl(url, object)
+    results <- jsonlite::fromJSON(httr::content(response, "text"))
+    results$data[,-1]
+  },
+  error = function(e) { e }
+  )
   results
 }
+
+
 
 # Load all data from a series of pages
 loadPages <- function (object, url) {
