@@ -11,8 +11,8 @@ library(lubridate)
 library(reshape2)
 
 Sys.setenv(KM_API_TOKEN='ZZT0J_ii9OYKl1W5vw6nkKiM17LTT3dgVZO--HWeVsuAII-gdQWKfVUR3zEF3qrF')
-startDate <- as.Date("2016-04-19")
-endDate <- as.Date("2016-04-19")
+startDate <- as.Date("2016-04-21")
+endDate <- as.Date("2016-05-22")
 KM_Report_Name <- "bi-906-pricingpage-01"
 
 reportInfo  <- read(KissReports()) %>%
@@ -32,7 +32,7 @@ report <- KissReport(reportUrl,
                                      "pro99_Annual_Signup_Date",
                                      "pro199_Monthly_Signup_Date",
                                      "pro199_Annual_Signup_Date"))
-pullReportData <- browser(read(report))
+pullReportData <- read(report)
 
 ####
 

@@ -45,7 +45,7 @@ readUrl <- function(url, cacheObject) {
       }
       else if (tries >= maxTries) {
         stop("Reached maximum retry count for url:", url, "\n",
-                         "Server Response:", httr::message_for_status(response))
+             "Server Response:", httr::message_for_status(response))
       }
       Sys.sleep(2)
     }
@@ -88,53 +88,35 @@ buildPaginationUrls <- function(urlTemplate, offsets) {
 }
 
 # Pull out Kissmetrics results as matrix
-GetDataFromReport <- function(pulledReport) {
-  # New people_search_v3 reports don't automatically output a single
-  # matrix with the KM identifier, email and attributes.
-  # Instead, it outputs a list with 3 elements: the KM identifier,
-  # the email/UUID and the other columns
-  reportColumnNames <- names(pulledReport$data)
-  if(sum(reportColumnNames %in% c("identity","columns")) == 2){
-    resultsColumns <- matrix(unlist(pulledReport$data$columns),
-                             ncol = length(pulledReport$data$columns[[1]]),
+GetDataFromReport <- function(fetchedResults) {
+  # Check if "identity" and "columns" field exist in results
+  # If they do, convert results into matrix
+  resultsColumnNames <- names(fetchedResults$data)
+  if(sum(resultsColumnNames %in% c("identity","columns")) == 2){
+    resultsColumns <- matrix(unlist(fetchedResults$data$columns),
+                             ncol = length(fetchedResults$data$columns[[1]]),
                              byrow = TRUE)
-    pulledReport$data <- cbind(pulledReport$data$identity,
+    reportMatrix <- cbind(fetchedResults$data$identity,
                           resultsColumns)
   } else {
-    pulledReport$data <- pulledReport$data[,-1]
+    reportMatrix <- fetchedResults$data[,-1]
   }
-  return(pulledReport$data)
+  return(reportMatrix)
 }
 
-# # load data from a page
-# loadPage <- function (url, object) {
-#   # Provide a status update
-#   cat(stringr::str_extract(url,"offset=\\d+"), "|")
-#   results <- tryCatch( {
-#         response <- readUrl(url, object)
-#         results <- jsonlite::fromJSON(httr::content(response, "text"))
-#         results$data <- GetDataFromReport(results)
-#
-#       },
-#       error = function(e) { e }
-#     )
-#   results
-# }
-
+# load data from a page
 loadPage <- function (url, object) {
   # Provide a status update
   cat(stringr::str_extract(url,"offset=\\d+"), "|")
   results <- tryCatch( {
     response <- readUrl(url, object)
     results <- jsonlite::fromJSON(httr::content(response, "text"))
-    results$data[,-1]
+    GetDataFromReport(results)
   },
   error = function(e) { e }
   )
   results
 }
-
-
 
 # Load all data from a series of pages
 loadPages <- function (object, url) {
@@ -150,19 +132,19 @@ loadPages <- function (object, url) {
   if(totalItems > 0) {
     # Rip out any existing query params
     urlTemplate <- stringr::str_c(stringr::str_split(url, "\\?", 2)[[1]][1],
-                                         "?limit=", format(itemsPerPage, scientific=FALSE), "\u0026offset={{OFFSET}}")
+                                  "?limit=", format(itemsPerPage, scientific=FALSE), "\u0026offset={{OFFSET}}")
 
 
     urls <- buildPaginationUrls(urlTemplate = urlTemplate,
-                                       offsets = seq(from=0,
-                                                     to=totalItems - 1,
-                                                     by=itemsPerPage))
+                                offsets = seq(from=0,
+                                              to=totalItems - 1,
+                                              by=itemsPerPage))
     result <- do.call(rbind, lapply(urls, loadPage, object=object))
   } else if (is.null(object$columnNames)) {
     result <- data.frame(product_id=c(), account_id=c(), report_type=c(), name=c(), created_at=c(), links=c())
   } else {
     result <- setNames(data.frame(matrix(ncol=length(object$columnNames), nrow=0)),
-                        object$columnNames)
+                       object$columnNames)
   }
   return(result)
 }
@@ -180,7 +162,7 @@ try_convert_time <- function(char_vector, formats = "%Y-%m-%d %H:%M:%S") {
 
   converted <- tryCatch(
     lubridate::with_tz(
-        lubridate::fast_strptime(char_vector, format = formats, tz = timezone),
+      lubridate::fast_strptime(char_vector, format = formats, tz = timezone),
       "UTC"),
     error = function(e) char_vector
   )
