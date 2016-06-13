@@ -18,8 +18,18 @@
 #'   and end dates are specified this returns a new KissReport object that can
 #'   be passed to the read S3 generic
 #' @examples
+#'    # Using a people_search_v2 report
 #'    reportUrl <- "https://query.kissmetrics.com/v2/products/6581c29e-ab13-1030-97f2-22000a91b1a1/reports/1c564450-3586-0133-85e2-22000a9a8afc/run"
 #'    report <- KissReport(reportUrl,
+#'                        interval = lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02")),
+#'                        columnNames = c("KM_Email", "KM_FirstUserId", "FirstVisitDate",
+#'                                        "FirstSource", "FirstMedium",
+#'                                        "FirstCampaignName", "FirstCampaignContent", "FirstCampaignTerms",
+#'                                        "FirstReferrer"))
+#'    reportResults <- read(report)
+#'    # Or using a people_search_v3 report
+#'    reportUrlV3 <- "https://query.kissmetrics.com/v2/products/6581c29e-ab13-1030-97f2-22000a91b1a1/reports/893583b0-0bec-0134-ab92-22000ab4dcd7/run"
+#'    reportV3 <- KissReport(reportUrlV3,
 #'                        interval = lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02")),
 #'                        columnNames = c("KM_Email", "KM_FirstUserId", "FirstVisitDate",
 #'                                        "FirstSource", "FirstMedium",
@@ -79,7 +89,7 @@ KissReport <- function(url, start, end, interval, columnNames) {
 read.KissReport <- function(report) {
   # Make request
   headers <- c(authorizationHeader(), jsonHeader())
-  body <- lapply(as.list(report$interval), as.timestamp)
+  body <- buildReportRequestPayload()
   encoding <- "json"
 
   requestKey <- c(report$url, headers, body, encoding)
