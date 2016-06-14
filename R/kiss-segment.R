@@ -5,7 +5,9 @@
 #' This is a constructor function.
 #' @examples
 #'  rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value"))
-#'  segment <- KissSegment("and", rules)
+#'  segment <- KissSegment(type = "and",
+#'                         rules = rules,
+#'                         defaultInterval = lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02")))
 #'
 #' @param type 'and' or 'or' - how should the rules for the segment be combined
 #' @export
@@ -31,6 +33,7 @@ asJson.KissSegment <- function(segment) {
   json <- replacePlaceholder(json, "\\{\\{type\\}\\}", segment$type)
   rulesJson <- lapply(segment$rules, asJson)
   json <- replacePlaceholder(json, "\\{\\{rules\\}\\}", paste(rulesJson, collapse=","))
-  json <- replacePlaceholder(json, "\\{\\{options\\}\\}", asJson(segment$options))
+  optionsJson <- lapply(segment$options, asJson)
+  json <- replacePlaceholder(json, "\\{\\{options\\}\\}", jsonlite::toJSON(optionsJson, auto_unbox=TRUE))
   return(json)
 }

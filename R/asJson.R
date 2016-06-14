@@ -13,3 +13,7 @@ asJson <- function(object, ...) {
 asJson.default <- function(object, ...) {
   jsonlite::toJSON(object)
 }
+
+asJson.Interval <- function(interval, format = NA) {
+  jsonlite::toJSON(c(makeKMDateRange(interval)), auto_unbox=TRUE)
+}
