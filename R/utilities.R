@@ -26,7 +26,7 @@ as.timestamp <- function(date) {
 # json <- replacePlaceholder(json, "\\{\\{type\\}\\}", segment$type)
 replacePlaceholder <- function(string, placeholder, value) {
   stringr::str_replace_all(string,
-                           placeholder,
+                           stringr::regex(placeholder, multiline = TRUE),
                            value)
 }
 
@@ -39,8 +39,8 @@ format.url <- function(url) {
 makeKMDateRange <- function(interval) {
   list(
     dateRangeId = "custom",
-    startDate = as.timestamp(lubridate::int_start(report$interval)),
-    endDate = as.timestamp(lubridate::int_end(report$interval))
+    startDate = as.timestamp(lubridate::int_start(interval)),
+    endDate = as.timestamp(lubridate::int_end(interval))
   )
 }
 

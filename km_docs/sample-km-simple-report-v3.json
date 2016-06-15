@@ -1,0 +1,191 @@
+{
+  "sort": "0",
+  "order": "asc",
+  "product_id": "6581c29e-ab13-1030-97f2-22000a91b1a1",
+  "query_params": {
+    "type": "group",
+    "filter": {
+      "type": "and",
+      "operands": [{
+        "type": "event",
+        "negate": false,
+        "event": 72,
+        "frequencyValue": 1,
+        "frequencyOccurrence": "at_least",
+        "dateRange": {
+          "dateRangeId": "custom",
+          "startDate": "2016-05-03",
+          "endDate": "2016-05-03"
+        },
+        "comparisonMode": "any_value"
+      }],
+      "dateRange": {
+        "dateRangeId": "this_month_to_date"
+      },
+      "version": 2,
+      "options": {
+        "defaultDateRange": {
+          "dateRangeId": "custom",
+          "startDate": "2016-05-03",
+          "endDate": "2016-05-03"
+        }
+      }
+    },
+    "calculations": [{
+      "type": "first_value_in_range",
+      "subject": {
+        "type": "property",
+        "negate": false,
+        "property": 0,
+        "comparisonMode": "any_value",
+        "dateRange": {
+          "dateRangeId": "any_time"
+        },
+        "version": 2,
+        "options": {
+          "defaultDateRange": {
+            "dateRangeId": "any_time"
+          }
+        }
+      },
+      "label": "First value of Customer ID",
+      "date_range_label": "Any time"
+    }, {
+      "type": "first_date_in_range",
+      "subject": {
+        "type": "event",
+        "negate": false,
+        "event": 6,
+        "frequencyValue": 1,
+        "frequencyOccurrence": "at_least",
+        "dateRange": {
+          "dateRangeId": "any_time"
+        },
+        "comparisonMode": "any_value",
+        "version": 2,
+        "options": {
+          "defaultDateRange": {
+            "dateRangeId": "any_time"
+          }
+        }
+      },
+      "label": "First time of Visited site",
+      "date_range_label": "Any time"
+    }, {
+      "type": "first_value_in_range",
+      "subject": {
+        "type": "property",
+        "negate": false,
+        "property": 7,
+        "comparisonMode": "any_value",
+        "dateRange": {
+          "dateRangeId": "any_time"
+        },
+        "version": 2,
+        "options": {
+          "defaultDateRange": {
+            "dateRangeId": "any_time"
+          }
+        }
+      },
+      "label": "First value of Campaign source",
+      "date_range_label": "Any time"
+    }, {
+      "type": "first_value_in_range",
+      "subject": {
+        "type": "property",
+        "negate": false,
+        "property": 5,
+        "comparisonMode": "any_value",
+        "dateRange": {
+          "dateRangeId": "any_time"
+        },
+        "version": 2,
+        "options": {
+          "defaultDateRange": {
+            "dateRangeId": "any_time"
+          }
+        }
+      },
+      "label": "First value of Campaign medium",
+      "date_range_label": "Any time"
+    }, {
+      "type": "first_value_in_range",
+      "subject": {
+        "type": "property",
+        "negate": false,
+        "property": 6,
+        "comparisonMode": "any_value",
+        "dateRange": {
+          "dateRangeId": "any_time"
+        },
+        "version": 2,
+        "options": {
+          "defaultDateRange": {
+            "dateRangeId": "any_time"
+          }
+        }
+      },
+      "label": "First value of Campaign name",
+      "date_range_label": "Any time"
+    }, {
+      "type": "first_value_in_range",
+      "subject": {
+        "type": "property",
+        "negate": false,
+        "property": 4,
+        "comparisonMode": "any_value",
+        "dateRange": {
+          "dateRangeId": "any_time"
+        },
+        "version": 2,
+        "options": {
+          "defaultDateRange": {
+            "dateRangeId": "any_time"
+          }
+        }
+      },
+      "label": "First value of Campaign content",
+      "date_range_label": "Any time"
+    }, {
+      "type": "first_value_in_range",
+      "subject": {
+        "type": "property",
+        "negate": false,
+        "property": 8,
+        "comparisonMode": "any_value",
+        "dateRange": {
+          "dateRangeId": "any_time"
+        },
+        "version": 2,
+        "options": {
+          "defaultDateRange": {
+            "dateRangeId": "any_time"
+          }
+        }
+      },
+      "label": "First value of Campaign terms",
+      "date_range_label": "Any time"
+    }, {
+      "type": "first_value_in_range",
+      "subject": {
+        "type": "property",
+        "negate": false,
+        "property": 1,
+        "comparisonMode": "any_value",
+        "dateRange": {
+          "dateRangeId": "any_time"
+        },
+        "version": 2,
+        "options": {
+          "defaultDateRange": {
+            "dateRangeId": "any_time"
+          }
+        }
+      },
+      "label": "First value of Referrer",
+      "date_range_label": "Any time"
+    }],
+    "defaultCalculationDateRange": "any_time"
+  }
+}
