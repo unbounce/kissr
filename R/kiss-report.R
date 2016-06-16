@@ -90,14 +90,12 @@ read.KissReport <- function(report) {
   # Make request
   headers <- c(authorizationHeader(), jsonHeader())
   body <- asJson(report)
-  # body <- buildReportRequestPayload(report)
   encoding <- "json"
 
   requestKey <- c(report$url, headers, body, encoding)
   response <- readCache(report, requestKey)
   if (is.null(response)) {
     url <- report$url
-    #url <- "http://requestb.in/1fbrxni1"
     response <- httr::POST(url,
                          body = body,
                          encode = encoding,
@@ -145,17 +143,17 @@ read.KissReport <- function(report) {
   # resultsLink should now be ready
   print("Report ready, pulling results")
   results <- as.data.frame(loadPages(report, resultsLink), stringsAsFactors = FALSE)
-  if (!is.null(report$columnNames)) {
-    names(results) <- report$columnNames
-  }
+  names(results) <- names(report)
 
-  # We don't necessarily want the times in the timezone KM returns them in.
-  # Use try_convert_time to see if any of the columns are filled with times as
-  # strings. If so then convert them to POSIX.ct classes with the timezone data
-  # from FROM_TIMEZONE. try_convert_time will then force the UTC timezone for
-  # all returned time values.
-  map_dates_results <- dplyr::mutate_each_(results, dplyr::funs(try_convert_time), names(results))
-  map_dates_results
+  # KissMetrics returns times as unix timestamps (seconds from origin in UTC)
+  # Update every column generated from a calculation with type matching *_date_*
+  # to be POSIX.ct time.
+  results[, reportCalculationClasses(report) == "timestamp"] <-
+    as.POSIXct(as.numeric(results[, reportCalculationClasses(report) == "timestamp"]),
+               origin = "1970-01-01",
+               tz = "UTC")
+
+  results
 }
 
 #' @export
@@ -180,4 +178,9 @@ asJson.KissReport <- function(report) {
   calculationsJson <- lapply(report$calculations, asJson)
   json <- replacePlaceholder(json, "\\{\\{calculations\\}\\}", paste(calculationsJson, collapse=","))
   return(json)
+}
+
+#' @export
+names.KissReport <- function(report) {
+  c('identity', sapply(report$calculations, function(calculation) calculation$label))
 }
