@@ -90,12 +90,15 @@ read.KissReport <- function(report) {
   # Make request
   headers <- c(authorizationHeader(), jsonHeader())
   body <- asJson(report)
+  # body <- buildReportRequestPayload(report)
   encoding <- "json"
 
   requestKey <- c(report$url, headers, body, encoding)
   response <- readCache(report, requestKey)
   if (is.null(response)) {
-    response <- httr::POST(report$url,
+    url <- report$url
+    #url <- "http://requestb.in/1fbrxni1"
+    response <- httr::POST(url,
                          body = body,
                          encode = encoding,
                          httr::add_headers(.headers = headers))
@@ -157,23 +160,23 @@ read.KissReport <- function(report) {
 
 #' @export
 asJson.KissReport <- function(report) {
-  template <- "
+  template <- '
   {
-    'sort':'0',
-    'order':'asc',
-    'product_id':'{{product_id}}',
-    'query_params': {
-      'type':'group',
-      'filter':{{segment}},
-      'defaultCalculationDateRange':'{{defaultCalculationDateRange}}',
-      'calculations':[{{calculations}}]
+    "sort":"0",
+    "order":"asc",
+    "product_id":"{{product_id}}",
+    "query_params": {
+      "type":"group",
+      "filter":{{segment}},
+      "defaultCalculationDateRange":{{defaultCalculationDateRange}},
+      "calculations":[{{calculations}}]
     }
-  }"
+  }'
 
   json <- template
   json <- replacePlaceholder(json, "\\{\\{product_id\\}\\}", report$productId)
   json <- replacePlaceholder(json, "\\{\\{segment\\}\\}", asJson(report$segment))
-  json <- replacePlaceholder(json, "\\{\\{defaultCalculationDateRange\\}\\}", makeKMDateRange(report$interval))
+  json <- replacePlaceholder(json, "\\{\\{defaultCalculationDateRange\\}\\}", jsonlite::toJSON(makeKMDateRange(report$interval), auto_unbox = TRUE))
   calculationsJson <- lapply(report$calculations, asJson)
   json <- replacePlaceholder(json, "\\{\\{calculations\\}\\}", paste(calculationsJson, collapse=","))
   return(json)

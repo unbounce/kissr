@@ -27,13 +27,14 @@ KissSegment <- function(type, rules, defaultInterval = NA) {
 
 #' @export
 asJson.KissSegment <- function(segment) {
-  segmentTemplate <- "{'type':'{{type}}', 'operands':[{{rules}}], 'options': {{options}}}"
+  segmentTemplate <- '{"type":"{{type}}", "operands":[{{rules}}], "options": {{options}}}'
 
   json <- segmentTemplate
   json <- replacePlaceholder(json, "\\{\\{type\\}\\}", segment$type)
   rulesJson <- lapply(segment$rules, asJson)
   json <- replacePlaceholder(json, "\\{\\{rules\\}\\}", paste(rulesJson, collapse=","))
-  optionsJson <- lapply(segment$options, asJson)
-  json <- replacePlaceholder(json, "\\{\\{options\\}\\}", jsonlite::toJSON(optionsJson, auto_unbox=TRUE))
+  json <- replacePlaceholder(json,
+                             "\\{\\{options\\}\\}",
+                             jsonlite::toJSON(lapply(segment$options, as.list), auto_unbox=TRUE))
   return(json)
 }

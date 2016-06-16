@@ -58,191 +58,143 @@ reportPayload <- function(productId, segment, calculations, interval) {
 }
 
 buildReportRequestPayload <- function(report) {
-  paste0('{',
-         '"sort": "0",',
-         '"order": "asc",',
-         '"product_id": "6581c29e-ab13-1030-97f2-22000a91b1a1",',
-         '"query_params": {',
-         '"type": "group",',
-         '"filter": {',
-         '"type": "and",',
-         '"operands": [{',
-         '"type": "event",',
-         '"negate": false,',
-         '"event": 72,',
-         '"frequencyValue": 1,',
-         '"frequencyOccurrence": "at_least",',
-         '},',
-         '"comparisonMode": "any_value"',
-         '}],',
-         '"version": 2,',
-         '"options": {',
-         '"defaultDateRange": {',
-         '"dateRangeId": "custom",',
-         '"startDate": "2016-05-03",',
-         '"endDate": "2016-05-03"',
-         '}',
-         '}',
-         '},',
-         '"calculations": [{',
-         '"type": "first_value_in_range",',
-         '"subject": {',
-         '"type": "property",',
-         '"negate": false,',
-         '"property": 0,',
-         '"comparisonMode": "any_value",',
-         '"dateRange": {',
-         '"dateRangeId": "any_time"',
-         '},',
-         '"version": 2,',
-         '"options": {',
-         '"defaultDateRange": {',
-         '"dateRangeId": "any_time"',
-         '}',
-         '}',
-         '},',
-         '"label": "First value of Customer ID",',
-         '"date_range_label": "Any time"',
-         '}, {',
-         '"type": "first_date_in_range",',
-         '"subject": {',
-         '"type": "event",',
-         '"negate": false,',
-         '"event": 6,',
-         '"frequencyValue": 1,',
-         '"frequencyOccurrence": "at_least",',
-         '"dateRange": {',
-         '"dateRangeId": "any_time"',
-         '},',
-         '"comparisonMode": "any_value",',
-         '"version": 2,',
-         '"options": {',
-         '"defaultDateRange": {',
-         '"dateRangeId": "any_time"',
-         '}',
-         '}',
-         '},',
-         '"label": "First time of Visited site",',
-         '"date_range_label": "Any time"',
-         '}, {',
-         '"type": "first_value_in_range",',
-         '"subject": {',
-         '"type": "property",',
-         '"negate": false,',
-         '"property": 7,',
-         '"comparisonMode": "any_value",',
-         '"dateRange": {',
-         '"dateRangeId": "any_time"',
-         '},',
-         '"version": 2,',
-         '"options": {',
-         '"defaultDateRange": {',
-         '"dateRangeId": "any_time"',
-         '}',
-         '}',
-         '},',
-         '"label": "First value of Campaign source",',
-         '"date_range_label": "Any time"',
-         '}, {',
-         '"type": "first_value_in_range",',
-         '"subject": {',
-         '"type": "property",',
-         '"negate": false,',
-         '"property": 5,',
-         '"comparisonMode": "any_value",',
-         '"dateRange": {',
-         '"dateRangeId": "any_time"',
-         '},',
-         '"version": 2,',
-         '"options": {',
-         '"defaultDateRange": {',
-         '"dateRangeId": "any_time"',
-         '}',
-         '}',
-         '},',
-         '"label": "First value of Campaign medium",',
-         '"date_range_label": "Any time"',
-         '}, {',
-         '"type": "first_value_in_range",',
-         '"subject": {',
-         '"type": "property",',
-         '"negate": false,',
-         '"property": 6,',
-         '"comparisonMode": "any_value",',
-         '"dateRange": {',
-         '"dateRangeId": "any_time"',
-         '},',
-         '"version": 2,',
-         '"options": {',
-         '"defaultDateRange": {',
-         '"dateRangeId": "any_time"',
-         '}',
-         '}',
-         '},',
-         '"label": "First value of Campaign name",',
-         '"date_range_label": "Any time"',
-         '}, {',
-         '"type": "first_value_in_range",',
-         '"subject": {',
-         '"type": "property",',
-         '"negate": false,',
-         '"property": 4,',
-         '"comparisonMode": "any_value",',
-         '"dateRange": {',
-         '"dateRangeId": "any_time"',
-         '},',
-         '"version": 2,',
-         '"options": {',
-         '"defaultDateRange": {',
-         '"dateRangeId": "any_time"',
-         '}',
-         '}',
-         '},',
-         '"label": "First value of Campaign content",',
-         '"date_range_label": "Any time"',
-         '}, {',
-         '"type": "first_value_in_range",',
-         '"subject": {',
-         '"type": "property",',
-         '"negate": false,',
-         '"property": 8,',
-         '"comparisonMode": "any_value",',
-         '"dateRange": {',
-         '"dateRangeId": "any_time"',
-         '},',
-         '"version": 2,',
-         '"options": {',
-         '"defaultDateRange": {',
-         '"dateRangeId": "any_time"',
-         '}',
-         '}',
-         '},',
-         '"label": "First value of Campaign terms",',
-         '"date_range_label": "Any time"',
-         '}, {',
-         '"type": "first_value_in_range",',
-         '"subject": {',
-         '"type": "property",',
-         '"negate": false,',
-         '"property": 1,',
-         '"comparisonMode": "any_value",',
-         '"dateRange": {',
-         '"dateRangeId": "any_time"',
-         '},',
-         '"version": 2,',
-         '"options": {',
-         '"defaultDateRange": {',
-         '"dateRangeId": "any_time"',
-         '}',
-         '}',
-         '},',
-         '"label": "First value of Referrer",',
-         '"date_range_label": "Any time"',
-         '}],',
-         '"defaultCalculationDateRange": "any_time"',
-         '}',
-         '}')
-
+  '{
+    "sort": "0",
+    "order": "asc",
+    "product_id": "6581c29e-ab13-1030-97f2-22000a91b1a1",
+    "query_params": {
+      "type": "group",
+      "filter": {
+        "type": "and",
+        "operands": [{
+          "type": "property",
+          "negate": false,
+          "property": 7,
+          "comparisonMode": "any_value",
+          "dateRange": {
+            "dateRangeId": "custom",
+            "startDate": "2015-06-01T17:00:00-0700",
+            "endDate": "2015-06-02T17:00:00-0700"
+          }
+        }],
+        "version": 2,
+        "options": {
+          "defaultDateRange": {
+            "dateRangeId": "custom",
+            "startDate": "2015-06-01T17:00:00-0700",
+            "endDate": "2015-06-02T17:00:00-0700"
+          }
+        }
+      },
+      "defaultCalculationDateRange": {
+        "dateRangeId": "custom",
+        "startDate": "2016-04-09",
+        "endDate": "2016-05-09"
+      },
+      "calculations": [{
+        "type": "first_date_in_range",
+        "subject": {
+          "type": "property",
+          "negate": false,
+          "property": 7,
+          "comparisonMode": "any_value",
+          "dateRange": {
+            "dateRangeId": "custom",
+            "startDate": "2016-05-09",
+            "endDate": "2016-05-09"
+          },
+          "version": 2,
+          "options": {
+            "defaultDateRange": {
+              "dateRangeId": "custom",
+              "startDate": "2016-05-09",
+              "endDate": "2016-05-09"
+            }
+          }
+        },
+        "label": "First time of Campaign source",
+        "date_range_label": "May 9",
+        "start_date": 1462752000,
+        "end_date": 1462838399
+      }, {
+        "type": "first_value_in_range",
+        "subject": {
+          "type": "property",
+          "negate": false,
+          "property": 7,
+          "comparisonMode": "any_value",
+          "dateRange": {
+            "dateRangeId": "custom",
+            "startDate": "2016-04-09",
+            "endDate": "2016-05-09"
+          },
+          "version": 2,
+          "options": {
+            "defaultDateRange": {
+              "dateRangeId": "custom",
+              "startDate": "2016-04-09",
+              "endDate": "2016-05-09"
+            }
+          }
+        },
+        "label": "First value of Campaign source",
+        "date_range_label": "Apr 9 - May 9",
+        "start_date": 1460160000,
+        "end_date": 1462838399
+      }, {
+        "type": "last_date_in_range",
+        "subject": {
+          "type": "property",
+          "negate": false,
+          "property": 7,
+          "comparisonMode": "any_value",
+          "dateRange": {
+            "dateRangeId": "custom",
+            "startDate": "2016-05-09",
+            "endDate": "2016-05-09"
+          },
+          "version": 2,
+          "options": {
+            "defaultDateRange": {
+              "dateRangeId": "custom",
+              "startDate": "2016-05-09",
+              "endDate": "2016-05-09"
+            }
+          }
+        },
+        "label": "Last time of Campaign source",
+        "date_range_label": "May 9",
+        "start_date": 1462752000,
+        "end_date": 1462838399
+      }, {
+        "type": "last_value_in_range",
+        "subject": {
+          "type": "property",
+          "negate": false,
+          "property": 7,
+          "comparisonMode": "any_value",
+          "dateRange": {
+            "dateRangeId": "custom",
+            "startDate": "2016-05-09",
+            "endDate": "2016-05-09"
+          },
+          "version": 2,
+          "options": {
+            "defaultDateRange": {
+              "dateRangeId": "custom",
+              "startDate": "2016-05-09",
+              "endDate": "2016-05-09"
+            }
+          }
+        },
+        "label": "Last value of Campaign source",
+        "date_range_label": "May 9",
+        "start_date": 1462752000,
+        "end_date": 1462838399
+      }]
+    }
+  }
+  '
 }
 
 # Read data from a URL - will retry MAX_RETRY_COUNT times if response code isn't
