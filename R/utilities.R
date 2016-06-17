@@ -169,30 +169,6 @@ loadPages <- function (object, url) {
   return(result)
 }
 
-# We only support a specific format returned by KissMetrics, so we'll use
-# lubridate::fast_strptime instead of parse_date_time.
-# Take a character vector, and if we think it is a time that can be parsed by
-# format we'll return a vector of times, if it can't be converted (any of the
-# non-NA elements fail to parse) we return the original vector
-try_convert_time <- function(char_vector, formats = "%Y-%m-%d %H:%M:%S") {
-  result <- char_vector
-
-  timezone <- Sys.getenv("KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME")
-  if(is.na(timezone)) timezone <- "UTC"
-
-  converted <- tryCatch(
-    as.POSIXct(as.numeric(result)),
-    error = function(e) char_vector
-  )
-  # If every non NA (and there must be non NAs) in the char vector can be converted to time then return
-  # converted, otherwise return char_vector
-  if( any(!is.na(char_vector)) &&
-      isTRUE(all.equal(is.na(converted), is.na(char_vector)))) {
-    result <- converted
-  }
-  result
-}
-
 reportCalculationClasses <- function(report) {
   calculationTypes <- c("character", sapply(report$calculations, function(calculation) calculation$type))
   ifelse(stringr::str_detect(calculationTypes, "_date_"), "timestamp", "character")

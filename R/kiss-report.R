@@ -5,10 +5,13 @@
 #' This is a constructor function.
 #'
 #' @param productId The product id to run the report against
-#' @param segment - a KissSegment specifying the segment to run the report
+#' @param segment - a \link{KissSegment} specifying the segment to run the report
 #'   against.
-#' @param calculations - a list of KissCalculations representing the columns of
-#'   the report
+#' @param calculations - a list of \link{KissCalculation} objects representing
+#'   the columns of the report - any calculations with type of
+#'   \code{first_date_in_range} or \code{last_date_in_range} will be returned as
+#'   a \code{POSIXct} class when report is read. Anything else will be a
+#'   \code{character}.
 #' @param interval The time range you want the report run for as a
 #'   \code{lubridate::interval}
 #'   (optional - can specify start and end instead)
@@ -21,7 +24,7 @@
 #'    segment <- KissSegment(type = "and",
 #'                 rules = rules,
 #'                 defaultInterval = reportDates)
-#'    reportV3 <- KissReport(productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
+#'    report <- KissReport(productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
 #'                 segment = segment,
 #'                 calculations = list(
 #'                   KissCalculation.Event(label = "First time of visited site",
@@ -39,7 +42,7 @@ KissReport <- function(productId, segment, calculations, interval) {
   if (!lubridate::is.interval(interval)) stop("interval must be a valid interval")
   if (!is(segment, "KissSegment"))  stop("segment must be a KissSegment object")
   if (!is.list(calculations))  stop("calculations must be a list")
-  if ( length(calculations) > 0 & !sapply(calculations, is, "KissCalculation")) {
+  if ( length(calculations) > 0 & all(!sapply(calculations, is, "KissCalculation"))) {
     stop("calculations must contain only KissCalculations")
   }
 
@@ -65,26 +68,29 @@ KissReport <- function(productId, segment, calculations, interval) {
 #' returning everything in a data frame. Please note this is a synchronous
 #' function that can take quite some time to complete.
 #'
-#' NOTE:KissMetrics returns times in the time zone the product is configured in.
-#' If you would like to change the times to be in UTC you can specify the Time
-#' Zone Name used by KissMetrics in the
-#' KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME env var and this will return
-#' all times translated back to UTC from that timezone.
+#' NOTE:KissMetrics returns times in UTC
 #' @examples
-#'    Sys.setenv(KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME="America/Vancouver")
-#'    reportUrl <- "https://query.kissmetrics.com/v2/products/6581c29e-ab13-1030-97f2-22000a91b1a1/reports/1c564450-3586-0133-85e2-22000a9a8afc/run"
-#'    report <- KissReport(reportUrl,
-#'                        interval = lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02")),
-#'                        columnNames = c("KM_Email", "KM_FirstUserId", "FirstVisitDate",
-#'                                        "FirstSource", "FirstMedium",
-#'                                        "FirstCampaignName", "FirstCampaignContent", "FirstCampaignTerms",
-#'                                        "FirstReferrer"))
+#'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
+#'    rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value"))
+#'    segment <- KissSegment(type = "and",
+#'                 rules = rules,
+#'                 defaultInterval = reportDates)
+#'    report <- KissReport(productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
+#'                 segment = segment,
+#'                 calculations = list(
+#'                   KissCalculation.Event(label = "First time of visited site",
+#'                      eventId = 6,
+#'                      type = "first_date_in_range",
+#'                      negate = FALSE,
+#'                      frequencyValue = 1,
+#'                      frequencyOccurance = "at_least")),
+#'                 interval = reportDates,
+#'                 )
 #'    reportResults <- read(report)
-#'    # All times from KissMetrics will be treated as if they are in America/Vancouver
-#'    # time while the times in reportResults will be in UTC (so 7 or 8 hours later
-#'    # depending on DST)
 #'
-#' @return  A \code{data.frame} containing all the data in the report
+#' @return  A \code{data.frame} containing all the data in the report. The
+#'    columns in the data frame will be "identity" + any columns defined by the
+#'    report's calculations
 #' @export
 read.KissReport <- function(report) {
   # Make request
@@ -95,8 +101,7 @@ read.KissReport <- function(report) {
   requestKey <- c(report$url, headers, body, encoding)
   response <- readCache(report, requestKey)
   if (is.null(response)) {
-    url <- report$url
-    response <- httr::POST(url,
+    response <- httr::POST(report$url,
                          body = body,
                          encode = encoding,
                          httr::add_headers(.headers = headers))
@@ -149,9 +154,10 @@ read.KissReport <- function(report) {
   # Update every column generated from a calculation with type matching *_date_*
   # to be POSIX.ct time.
   results[, reportCalculationClasses(report) == "timestamp"] <-
-    as.POSIXct(as.numeric(results[, reportCalculationClasses(report) == "timestamp"]),
-               origin = "1970-01-01",
-               tz = "UTC")
+    lapply(results[, reportCalculationClasses(report) == "timestamp"],
+          function(x) {
+            as.POSIXct(as.numeric(x), origin = "1970-01-01", tz = "UTC")
+          })
 
   results
 }
