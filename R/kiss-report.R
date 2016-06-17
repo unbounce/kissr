@@ -33,7 +33,7 @@
 #'                      negate = FALSE,
 #'                      frequencyValue = 1,
 #'                      frequencyOccurance = "at_least")),
-#'                 interval = reportDates,
+#'                 interval = reportDates
 #'                 )
 #'    reportResults <- read(report)
 #' @export
@@ -84,13 +84,14 @@ KissReport <- function(productId, segment, calculations, interval) {
 #'                      negate = FALSE,
 #'                      frequencyValue = 1,
 #'                      frequencyOccurance = "at_least")),
-#'                 interval = reportDates,
+#'                 interval = reportDates
 #'                 )
 #'    reportResults <- read(report)
 #'
 #' @return  A \code{data.frame} containing all the data in the report. The
 #'    columns in the data frame will be "identity" + any columns defined by the
-#'    report's calculations
+#'    report's calculations. Any time values will be converted to POSIXct and
+#'    will be in UTC.
 #' @export
 read.KissReport <- function(report) {
   # Make request
@@ -148,6 +149,8 @@ read.KissReport <- function(report) {
   # resultsLink should now be ready
   print("Report ready, pulling results")
   results <- as.data.frame(loadPages(report, resultsLink), stringsAsFactors = FALSE)
+
+  # Set the names of the results to be "identity" + the labels used for the report calculations.
   names(results) <- names(report)
 
   # KissMetrics returns times as unix timestamps (seconds from origin in UTC)
@@ -162,6 +165,9 @@ read.KissReport <- function(report) {
   results
 }
 
+#' Convert a KissCalculation into a json structure understood by the KM API.
+#' Used internally by read.KissReport but also available for external
+#' introspection
 #' @export
 asJson.KissReport <- function(report) {
   template <- '
@@ -186,6 +192,25 @@ asJson.KissReport <- function(report) {
   return(json)
 }
 
+#' Get the column names for a report
+#' @example
+#'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
+#'    rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value"))
+#'    segment <- KissSegment(type = "and",
+#'                 rules = rules,
+#'                 defaultInterval = reportDates)
+#'    report <- KissReport(productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
+#'                 segment = segment,
+#'                 calculations = list(
+#'                   KissCalculation.Event(label = "First time of visited site",
+#'                      eventId = 6,
+#'                      type = "first_date_in_range",
+#'                      negate = FALSE,
+#'                      frequencyValue = 1,
+#'                      frequencyOccurance = "at_least")),
+#'                 interval = reportDates
+#'                 )
+#'    cat("Generating report with columns: ", paste(names(report), collapse=" | "))
 #' @export
 names.KissReport <- function(report) {
   c('identity', sapply(report$calculations, function(calculation) calculation$label))
