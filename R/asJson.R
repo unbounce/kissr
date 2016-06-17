@@ -9,13 +9,9 @@ asJson <- function(object, ...) {
   UseMethod("asJson", object)
 }
 
+#' Default asJson implementation - by default we just call jsonlite::toJSON
 #' @export
 asJson.default <- function(object, ...) {
   jsonlite::toJSON(object)
-}
-
-#' @export
-asJson.Interval <- function(interval, format = NA) {
-  jsonlite::toJSON(c(makeKMDateRange(interval)), auto_unbox=TRUE)
 }
 
