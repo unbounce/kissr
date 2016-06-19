@@ -121,7 +121,7 @@ KissCalculation.Property <- function(label,
   structure(list(
     type = type,
     subject = list(
-      type = "event",
+      type = "property",
       negate = negate,
       property = propertyId,
       comparisonMode = comparisonMode,
