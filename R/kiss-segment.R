@@ -14,7 +14,10 @@
 KissSegment <- function(type, rules, defaultInterval = NA) {
   options <- c()
   if(!is.na(defaultInterval)) {
-    options <- list(defaultDateRange = defaultInterval)
+    rules <- lapply(rules, function(r) {
+        if(is.na(r$interval)) r$interval <- defaultInterval
+        r
+      })
   }
 
   segment <- structure(list(

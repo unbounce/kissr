@@ -5,6 +5,8 @@
 #' @param frequencyOccurance How we are comparing against the
 #'   \code{frequencyValue}. Must be \code{at_least}, \code{at_most}, or
 #'   \code{exactly}
+#' @param interval What time frame are we looking at the events over? Defaults
+#'   to NA which uses the overall report time frame
 #' @param comparisonMode - unclear what this does. Defaults to 'any_value'
 #' @param negate Is this an inclusive rule or an exclusionary rule?
 #'
@@ -33,8 +35,8 @@
 #'    reportResults <- read(report)
 #' @export
 KissRule.Event <- function(negate, eventId, frequencyValue, frequencyOccurance,
-                           dateRange = NA, comparisonMode = 'any_value') {
-  if (!lubridate::is.interval(dateRange) & !is.na(dateRange))
+                           interval = NA, comparisonMode = 'any_value') {
+  if (!lubridate::is.interval(interval) & !is.na(interval))
     stop("interval must be a valid interval")
   structure(list(
     type = "event",
@@ -43,7 +45,7 @@ KissRule.Event <- function(negate, eventId, frequencyValue, frequencyOccurance,
     frequencyValue = frequencyValue,
     frequencyOccurance = frequencyOccurance,
     comparisonMode = comparisonMode,
-    dateRange = dateRange),
+    interval = interval),
     class = c("KissRule.Event", "KissRule"))
 }
 
@@ -56,6 +58,8 @@ KissRule.Event <- function(negate, eventId, frequencyValue, frequencyOccurance,
 #' @param comparisonString What should we compare against? Only used if
 #'    \code{comparisonMode} is \code{equals}, \code{contains},
 #'    \code{begins_with}, or \code{ends_with}
+#' @param interval What time frame are we looking at the properties over?
+#'   Defaults to NA which uses the overall report time frame
 #' @param negate Is this an inclusive rule or an exclusionary rule?
 #'
 #' @examples
@@ -83,12 +87,13 @@ KissRule.Event <- function(negate, eventId, frequencyValue, frequencyOccurance,
 #'              )
 #'    reportResults <- read(report)
 #' @export
-KissRule.Property <- function(negate, propertyId, comparisonMode, comparisonString = NA) {
+KissRule.Property <- function(negate, propertyId, comparisonMode, comparisonString = NA, interval = NA) {
   property <- list(
     type = "property",
     negate = negate,
     property = propertyId,
-    comparisonMode = comparisonMode)
+    comparisonMode = comparisonMode,
+    interval = interval)
   if(comparisonMode %in% c("equals", "contains", "begins_with", "ends_with")) {
     if(is.na(comparisonString)) stop("You must provide a comparison string for KissRule.Property comparison modes of 'equals', 'contains', 'begins_with', 'ends_with'")
     property["comparisonString"] <- comparisonString
@@ -100,18 +105,20 @@ KissRule.Property <- function(negate, propertyId, comparisonMode, comparisonStri
 #' Generates json for a KissRule.
 #' @export
 asJson.KissRule <- function(rule) {
-
   template <- '
   {
-  "type":"{{type}}",
-  "negate": {{negate}},
-  "event":{{event}},
-  "frequencyValue":{{frequencyValue}},
-  "frequencyOccurance":"{{frequencyOccurance}}",
-  "comparisonMode":"{{comparisonMode}}",
-  "dateRange":{{dateRange}}
+    "type":"{{type}}",
+    "negate": {{negate}},
+    "event":{{event}},
+    "frequencyValue":{{frequencyValue}},
+    "frequencyOccurance":"{{frequencyOccurance}}",
+    "comparisonMode":"{{comparisonMode}}",
+    "dateRange":{{dateRange}}
   }
   '
+
+  if (!lubridate::is.interval(rule$interval))
+    stop("rule must have a valid interval")
 
   json <- template
   json <- replacePlaceholder(json, "\\{\\{type\\}\\}", rule$type)
@@ -120,16 +127,10 @@ asJson.KissRule <- function(rule) {
   json <- replacePlaceholder(json, "\\{\\{frequencyValue\\}\\}", rule$frequencyValue)
   json <- replacePlaceholder(json, "\\{\\{frequencyOccurance\\}\\}", rule$frequencyOccurance)
   json <- replacePlaceholder(json, "\\{\\{comparisonMode\\}\\}", rule$comparisonMode)
-  if (!is.na(rule$dateRange)){
-    json <- replacePlaceholder(json, "\\{\\{dateRange\\}\\}",
-                               jsonlite::toJSON(makeKMDateRange(rule$dateRange),
+  json <- replacePlaceholder(json, "\\{\\{dateRange\\}\\}",
+                               jsonlite::toJSON(makeKMDateRange(rule$interval),
                                                 auto_unbox = TRUE))
-  } else {
-    json <- replacePlaceholder(json, "\\{\\{dateRange\\}\\}",
-                               jsonlite::toJSON(makeKMDateRange(report$interval),
-                                                auto_unbox = TRUE))
-  }
 
-  return(json)
+  json
 }
 
