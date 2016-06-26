@@ -156,11 +156,12 @@ read.KissReport <- function(report) {
   # KissMetrics returns times as unix timestamps (seconds from origin in UTC)
   # Update every column generated from a calculation with type matching *_date_*
   # to be POSIX.ct time.
-  results[, reportCalculationClasses(report) == "timestamp"] <-
-    lapply(results[, reportCalculationClasses(report) == "timestamp"],
-          function(x) {
-            as.POSIXct(as.numeric(x), origin = "1970-01-01", tz = "UTC")
-          })
+  convertTime <- function(x) {
+    as.POSIXct(as.numeric(x), origin = "1970-01-01", tz = "UTC")
+  }
+  results <- dplyr::mutate_each(results,
+                                dplyr::funs(convertTime),
+                                which(reportCalculationClasses(report) == "timestamp"))
 
   results
 }
