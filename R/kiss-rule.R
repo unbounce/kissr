@@ -110,7 +110,7 @@ asJson.KissRule.Event <- function(rule) {
     "type":"{{type}}",
     "negate": {{negate}},
     "event":{{event}},
-    "frequencyValue":{{frequencyValue}},
+    "frequencyValue":"{{frequencyValue}}",
     "frequencyOccurance":"{{frequencyOccurance}}",
     "comparisonMode":"{{comparisonMode}}",
     "dateRange":{{dateRange}}
