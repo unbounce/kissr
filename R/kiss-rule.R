@@ -72,8 +72,8 @@ KissRule.Event <- function(negate, eventId, frequencyValue, frequencyOccurance,
 #'                      eventId = 6,
 #'                      type = "last_date_in_range")
 #'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
-#'    rules <- list(KissRule.Property(negate = FALSE, propertyId = 10, comparisonMode = "any_value"),
-#'                  KissRule.Property(negate = FALSE, propertyId = 2, comparisonMode = "begins_with", comparisonString = "foo"))
+#'    rules <- list(KissRule.Property(negate = FALSE, propertyId = 10, comparisonMode = "any_value", interval = interval),
+#'                  KissRule.Property(negate = FALSE, propertyId = 2, comparisonMode = "begins_with", comparisonString = "foo", interval = interval))
 #'    segment <- KissSegment(type = "and",
 #'                 rules = rules,
 #'                 defaultInterval = reportDates)
@@ -152,12 +152,8 @@ asJson.KissRule.Property <- function(rule) {
   json <- replacePlaceholder(json, "\\{\\{type\\}\\}", rule$type)
   json <- replacePlaceholder(json, "\\{\\{negate\\}\\}", tolower(rule$negate))
   json <- replacePlaceholder(json, "\\{\\{property\\}\\}",rule$property)
-  json <- replacePlaceholder(json, "\\{\\{frequencyValue\\}\\}", rule$frequencyValue)
   json <- replacePlaceholder(json, "\\{\\{comparisonMode\\}\\}", rule$comparisonMode)
-  json <- replacePlaceholder(json, "\\{\\{dateRange\\}\\}",
-                             jsonlite::toJSON(makeKMDateRange(rule$interval),
-                                              auto_unbox = TRUE))
-  if(is.character(rule$comparisonString)){
+  if(rule$comparisonMode %in% c("equals", "contains", "begins_with", "ends_with")) {
     json <- replacePlaceholder(json,"\\{\\{comparison\\}\\}",
                                paste0(',\n',
                                       '\"comparisonString\": \"',
@@ -166,6 +162,8 @@ asJson.KissRule.Property <- function(rule) {
   } else {
     json <- replacePlaceholder(json,"\\{\\{comparison\\}\\}","")
   }
-
+  json <- replacePlaceholder(json, "\\{\\{dateRange\\}\\}",
+                             jsonlite::toJSON(makeKMDateRange(rule$interval),
+                                              auto_unbox = TRUE))
   json
 }
