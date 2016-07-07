@@ -16,7 +16,7 @@ GetAttributeList <- function(){
   eventsList$metric_type <- "event"
   # Get list of properties from KM
   propertiesList <- read(KissProperties())
-  propertiesList$metric_type <- "properties"
+  propertiesList$metric_type <- "property"
   # Union both tables
   fullAttributeList <- rbind(eventsList,propertiesList)
 
@@ -28,9 +28,8 @@ GetAttributeIndex <- function(attributeName,
                               productId = "6581c29e-ab13-1030-97f2-22000a91b1a1"){
   fullAttributeList <- GetAttributeList()
 
-  attributeIndex <- fullAttributeList %>%
-      filter(display_name == attributeName &
-               product_id == productId)
+  attributeIndex <- filter(fullAttributeList, display_name == attributeName &
+                             product_id == productId)
 
   if(nrow(attributeIndex) == 1){
     attributeIndex <- as.numeric(attributeIndex$index)
@@ -42,5 +41,26 @@ GetAttributeIndex <- function(attributeName,
     stop(paste0("Attribute name not in table.\n",
                 "Check attribute spelling by using GetAttributeList()\n",
                 "for full list of attributes (display_name column)."))
+  }
+}
+
+# Output event/property name from index number
+GetAttributeName <- function(attributeIndex,
+                              productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
+                             metricType = "event"){
+  fullAttributeList <- GetAttributeList()
+  metricType <- metricType
+  attributeName <- filter(fullAttributeList,index == attributeIndex &
+                            product_id == productId &
+                            metric_type == metricType)
+
+  if(nrow(attributeName) == 1){
+    return(attributeName$"name")
+  } else if(nrow(attributeName) > 1) {
+    stop(paste0("More than one attribute with that index.\n",
+                "Use GetAttributeList() for full list of attributes (index column)."))
+  } else {
+    stop(paste0("Attribute index not in table.\n",
+                "Check full attribute list by using GetAttributeList()."))
   }
 }
