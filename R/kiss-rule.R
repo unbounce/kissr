@@ -104,7 +104,7 @@ KissRule.Property <- function(negate, propertyId, comparisonMode, comparisonStri
 
 #' Generates json for a KissRule.
 #' @export
-asJson.KissRule <- function(rule) {
+asJson.KissRule.Event <- function(rule) {
   template <- '
   {
     "type":"{{type}}",
@@ -134,3 +134,38 @@ asJson.KissRule <- function(rule) {
   json
 }
 
+asJson.KissRule.Property <- function(rule) {
+  template <- '
+  {
+  "type":"{{type}}",
+  "negate": {{negate}},
+  "property":{{property}},
+  "comparisonMode":"{{comparisonMode}}",
+  "dateRange":{{dateRange}}{{comparison}}
+  }
+  '
+
+  if (!lubridate::is.interval(rule$interval))
+    stop("rule must have a valid interval")
+
+  json <- template
+  json <- replacePlaceholder(json, "\\{\\{type\\}\\}", rule$type)
+  json <- replacePlaceholder(json, "\\{\\{negate\\}\\}", tolower(rule$negate))
+  json <- replacePlaceholder(json, "\\{\\{property\\}\\}",rule$property)
+  json <- replacePlaceholder(json, "\\{\\{frequencyValue\\}\\}", rule$frequencyValue)
+  json <- replacePlaceholder(json, "\\{\\{comparisonMode\\}\\}", rule$comparisonMode)
+  json <- replacePlaceholder(json, "\\{\\{dateRange\\}\\}",
+                             jsonlite::toJSON(makeKMDateRange(rule$interval),
+                                              auto_unbox = TRUE))
+  if(is.character(rule$comparisonString)){
+    json <- replacePlaceholder(json,"\\{\\{comparison\\}\\}",
+                               paste0(',\n',
+                                      '\"comparisonString\": \"',
+                                      rule$comparisonString,
+                                      '\"'))
+  } else {
+    json <- replacePlaceholder(json,"\\{\\{comparison\\}\\}","")
+  }
+
+  json
+}
