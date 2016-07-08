@@ -72,8 +72,8 @@ KissRule.Event <- function(negate, eventId, frequencyValue, frequencyOccurance,
 #'                      eventId = 6,
 #'                      type = "last_date_in_range")
 #'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
-#'    rules <- list(KissRule.Property(negate = FALSE, propertyId = 10, comparisonMode = "any_value", interval = interval),
-#'                  KissRule.Property(negate = FALSE, propertyId = 2, comparisonMode = "begins_with", comparisonString = "foo", interval = interval))
+#'    rules <- list(KissRule.Property(negate = FALSE, propertyId = 10, comparisonMode = "any_value", interval = reportDates),
+#'                  KissRule.Property(negate = FALSE, propertyId = 2, comparisonMode = "contains", comparisonString = "copywriting", interval = reportDates))
 #'    segment <- KissSegment(type = "and",
 #'                 rules = rules,
 #'                 defaultInterval = reportDates)
