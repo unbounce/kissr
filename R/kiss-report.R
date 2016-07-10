@@ -151,7 +151,12 @@ read.KissReport <- function(report) {
   results <- as.data.frame(loadPages(report, resultsLink), stringsAsFactors = FALSE)
 
   # Set the names of the results to be "identity" + the labels used for the report calculations.
-  names(results) <- names(report)
+  # We have to handle this a little differently if the report generates no results.
+  if(ncol(results) == 0) {
+    results <- as.data.frame(setNames(replicate(length(names(report)), character(0)), names(report)))
+  } else {
+    names(results) <- names(report)
+  }
 
   # KissMetrics returns times as unix timestamps (seconds from origin in UTC)
   # Update every column generated from a calculation with type matching *_date_*
