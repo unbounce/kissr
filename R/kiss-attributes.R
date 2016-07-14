@@ -28,7 +28,7 @@ GetAttributeIndex <- function(attributeName,
                               productId = "6581c29e-ab13-1030-97f2-22000a91b1a1"){
   fullAttributeList <- GetAttributeList()
 
-  attributeIndex <- filter(fullAttributeList, display_name == attributeName &
+  attributeIndex <- dplyr::filter(fullAttributeList, display_name == attributeName &
                              product_id == productId)
 
   if(nrow(attributeIndex) == 1){
@@ -46,19 +46,13 @@ GetAttributeIndex <- function(attributeName,
 
 # Output event/property name from index number
 GetAttributeName <- function(attributeIndex,
-                              productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
-                             metricType = "event"){
+                              productId = "6581c29e-ab13-1030-97f2-22000a91b1a1"){
   fullAttributeList <- GetAttributeList()
-  metricType <- metricType
-  attributeName <- filter(fullAttributeList,index == attributeIndex &
-                            product_id == productId &
-                            metric_type == metricType)
+  attributeName <- dplyr::filter(fullAttributeList,index == attributeIndex &
+                            product_id == productId)
 
-  if(nrow(attributeName) == 1){
-    return(attributeName$"name")
-  } else if(nrow(attributeName) > 1) {
-    stop(paste0("More than one attribute with that index.\n",
-                "Use GetAttributeList() for full list of attributes (index column)."))
+  if(nrow(attributeName) >= 1){
+    return(attributeName[,c("display_name","metric_type")])
   } else {
     stop(paste0("Attribute index not in table.\n",
                 "Check full attribute list by using GetAttributeList()."))
