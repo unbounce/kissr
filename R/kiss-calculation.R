@@ -47,10 +47,9 @@ KissCalculation.Event <- function(label,
                                   frequencyValue = 1,
                                   frequencyOccurance = 'at_least',
                                   negate = FALSE) {
-  options <- c()
-  if(!is.na(interval)) {
-    options <- c(defaultDateRange = interval)
-  }
+
+  if (!lubridate::is.interval(interval))
+    stop("interval must be a valid interval")
 
   structure(list(
     type = type,
@@ -60,8 +59,7 @@ KissCalculation.Event <- function(label,
       event = eventId,
       frequencyValue = frequencyValue,
       frequencyOccurance = frequencyOccurance,
-      version = 2,
-      options = options),
+      dateRange = makeKMDateRange(interval)),
     label = label),
     class = c("KissCalculation.Event", "KissCalculation"))
 }
@@ -113,10 +111,9 @@ KissCalculation.Property <- function(label,
                                      interval = NA,
                                      comparisonMode = 'any_value',
                                      negate = FALSE) {
-  options <- c()
-  if(!is.na(interval)) {
-    options <- c(defaultDateRange = interval)
-  }
+
+  if (!lubridate::is.interval(interval))
+    stop("interval must be a valid interval")
 
   structure(list(
     type = type,
@@ -125,8 +122,7 @@ KissCalculation.Property <- function(label,
       negate = negate,
       property = propertyId,
       comparisonMode = comparisonMode,
-      version = 2,
-      options = options),
+      dateRange = makeKMDateRange(interval)),
     label = label),
     class = c("KissCalculation.Property", "KissCalculation"))
 }

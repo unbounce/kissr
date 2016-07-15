@@ -36,7 +36,7 @@
 #' @export
 KissRule.Event <- function(negate, eventId, frequencyValue, frequencyOccurance,
                            interval = NA, comparisonMode = 'any_value') {
-  if (!lubridate::is.interval(interval) & !is.na(interval))
+  if (!lubridate::is.interval(interval))
     stop("interval must be a valid interval")
   structure(list(
     type = "event",
