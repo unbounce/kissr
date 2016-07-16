@@ -158,11 +158,17 @@ read.KissReport <- function(report) {
     names(results) <- names(report)
   }
 
-  # KissMetrics returns times as unix timestamps (seconds from origin in UTC)
+  # KissMetrics returns times as unix timestamps. However seconds are
+  # from timezone set within KissMetrics Product Info (not necessarily UTC)
   # Update every column generated from a calculation with type matching *_date_*
   # to be POSIX.ct time.
   convertTime <- function(x) {
-    as.POSIXct(as.numeric(x), origin = "1970-01-01", tz = "UTC")
+    timeVariable <- as.POSIXct(as.numeric(x), origin = "1970-01-01", tz = "UTC")
+    # Correct timezone to UTC
+    timeVariable <- as.POSIXct(as.character(timeVariable),
+                               Sys.getenv("KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME"))
+    attr(timeVariable,"tzone") <- "UTC"
+    timeVariable
   }
   results <- dplyr::mutate_each(results,
                                 dplyr::funs(convertTime),
