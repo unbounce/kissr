@@ -19,9 +19,29 @@ as.timestamp <- function(date) {
   strftime(date, format = "%Y-%m-%dT%H:%M:%S%z")
 }
 
+# replace any substrings matching the placeholder regex patter with value
+# @example
+# string <- "{'foo':'{{bar}}'}"
+# json <- segmentTemplate
+# json <- replacePlaceholder(json, "\\{\\{type\\}\\}", segment$type)
+replacePlaceholder <- function(string, placeholder, value) {
+  stringr::str_replace_all(string,
+                           stringr::regex(placeholder, multiline = TRUE),
+                           value)
+}
+
+
 # Format an httr::url to a simple string
 format.url <- function(url) {
-  httr::build_url(x)
+  httr::build_url(url)
+}
+
+makeKMDateRange <- function(interval) {
+  list(
+    dateRangeId = "custom",
+    startDate = as.timestamp(lubridate::int_start(interval)),
+    endDate = as.timestamp(lubridate::int_end(interval))
+  )
 }
 
 # Read data from a URL - will retry MAX_RETRY_COUNT times if response code isn't
@@ -45,7 +65,7 @@ readUrl <- function(url, cacheObject) {
       }
       else if (tries >= maxTries) {
         stop("Reached maximum retry count for url:", url, "\n",
-                         "Server Response:", httr::message_for_status(response))
+             "Server Response:", httr::message_for_status(response))
       }
       Sys.sleep(2)
     }
@@ -87,17 +107,34 @@ buildPaginationUrls <- function(urlTemplate, offsets) {
                                   trim=TRUE))
 }
 
+# Pull out Kissmetrics results as matrix
+GetDataFromReport <- function(fetchedResults) {
+  # Check if "identity" and "columns" field exist in results
+  # If they do, convert results into matrix
+  resultsColumnNames <- names(fetchedResults$data)
+  if(sum(resultsColumnNames %in% c("identity","columns")) == 2){
+    resultsColumns <- matrix(unlist(fetchedResults$data$columns),
+                             ncol = length(fetchedResults$data$columns[[1]]),
+                             byrow = TRUE)
+    reportMatrix <- cbind(fetchedResults$data$identity,
+                          resultsColumns)
+  } else {
+    reportMatrix <- fetchedResults$data[,-1]
+  }
+  return(reportMatrix)
+}
+
 # load data from a page
 loadPage <- function (url, object) {
   # Provide a status update
   cat(stringr::str_extract(url,"offset=\\d+"), "|")
   results <- tryCatch( {
-        response <- readUrl(url, object)
-        results <- jsonlite::fromJSON(httr::content(response, "text"))
-        results$data[,-1]
-      },
-      error = function(e) { e }
-    )
+    response <- readUrl(url, object)
+    results <- jsonlite::fromJSON(httr::content(response, "text"))
+    GetDataFromReport(results)
+  },
+  error = function(e) { e }
+  )
   results
 }
 
@@ -115,45 +152,24 @@ loadPages <- function (object, url) {
   if(totalItems > 0) {
     # Rip out any existing query params
     urlTemplate <- stringr::str_c(stringr::str_split(url, "\\?", 2)[[1]][1],
-                                         "?limit=", format(itemsPerPage, scientific=FALSE), "\u0026offset={{OFFSET}}")
+                                  "?limit=", format(itemsPerPage, scientific=FALSE), "\u0026offset={{OFFSET}}")
 
 
     urls <- buildPaginationUrls(urlTemplate = urlTemplate,
-                                       offsets = seq(from=0,
-                                                     to=totalItems - 1,
-                                                     by=itemsPerPage))
+                                offsets = seq(from=0,
+                                              to=totalItems - 1,
+                                              by=itemsPerPage))
     result <- do.call(rbind, lapply(urls, loadPage, object=object))
   } else if (is.null(object$columnNames)) {
     result <- data.frame(product_id=c(), account_id=c(), report_type=c(), name=c(), created_at=c(), links=c())
   } else {
     result <- setNames(data.frame(matrix(ncol=length(object$columnNames), nrow=0)),
-                        object$columnNames)
+                       object$columnNames)
   }
   return(result)
 }
 
-# We only support a specific format returned by KissMetrics, so we'll use
-# lubridate::fast_strptime instead of parse_date_time.
-# Take a character vector, and if we think it is a time that can be parsed by
-# format we'll return a vector of times, if it can't be converted (any of the
-# non-NA elements fail to parse) we return the original vector
-try_convert_time <- function(char_vector, formats = "%Y-%m-%d %H:%M:%S") {
-  result <- char_vector
-
-  timezone <- Sys.getenv("KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME")
-  if(is.na(timezone)) timezone <- "UTC"
-
-  converted <- tryCatch(
-    lubridate::with_tz(
-        lubridate::fast_strptime(char_vector, format = formats, tz = timezone),
-      "UTC"),
-    error = function(e) char_vector
-  )
-  # If every non NA (and there must be non NAs) in the char vector can be converted to time then return
-  # converted, otherwise return char_vector
-  if( any(!is.na(char_vector)) &&
-      isTRUE(all.equal(is.na(converted), is.na(char_vector)))) {
-    result <- converted
-  }
-  result
+reportCalculationClasses <- function(report) {
+  calculationTypes <- c("character", sapply(report$calculations, function(calculation) calculation$type))
+  ifelse(stringr::str_detect(calculationTypes, "_date_"), "timestamp", "character")
 }

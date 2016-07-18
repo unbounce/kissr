@@ -1,9 +1,10 @@
 Package: kissr
 Title: Load Data From Kiss Metrics People Reports
-Version: 0.0.1.2
+Version: 1.0.0.0
 Authors@R: person("Yosem", "Sweet", email = "yosem.sweet@unbounce.com", role = c("aut", "cre"))
-Description: Kissr provides an interface to Kiss Metrics Core API, allowing you to query any prebuilt
-    People Reports and hiding the complexities of pagination and waiting for the report to run.
+Description: Kissr provides an interface to Kiss Metrics Core API, allowing you
+    to use the new people_search_v3 API. It hides hiding the complexities of
+    pagination and waiting for the report to run.
 Depends: R (>= 3.1.2)
 License: MIT
 LazyData: true
