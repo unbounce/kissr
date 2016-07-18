@@ -20,7 +20,8 @@
 #'   be passed to the read S3 generic
 #' @examples
 #'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
-#'    rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value"))
+#'    rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value",
+#'                                interval = reportDates))
 #'    segment <- KissSegment(type = "and",
 #'                 rules = rules,
 #'                 defaultInterval = reportDates)
@@ -30,7 +31,6 @@
 #'                   KissCalculation.Event(label = "First time of visited site",
 #'                      eventId = 6,
 #'                      type = "first_date_in_range",
-#'                      negate = FALSE,
 #'                      frequencyValue = 1,
 #'                      frequencyOccurance = "at_least")),
 #'                 interval = reportDates
@@ -165,8 +165,12 @@ read.KissReport <- function(report) {
   convertTime <- function(x) {
     timeVariable <- as.POSIXct(as.numeric(x), origin = "1970-01-01", tz = "UTC")
     # Correct timezone to UTC
+    systemTimezone <- Sys.getenv("KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME")
+    if(systemTimezone == "") {
+      systemTimezone <- "UTC"
+    }
     timeVariable <- as.POSIXct(as.character(timeVariable),
-                               Sys.getenv("KISSR__KISSMETRICS_CONFIGURED_TIMEZONE_ZONENAME"))
+                               systemTimezone)
     attr(timeVariable,"tzone") <- "UTC"
     timeVariable
   }

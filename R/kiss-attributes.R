@@ -1,15 +1,8 @@
-# Attribute (Event and Property) Explorer Functions
-
-# Use GetAttributeList() to get full list of properties and events from KM
-# Example: attributesList <- GetAttributeList()
-
-# Use GetAttributeIndex() by feeding it a single event/property Display Name to
-# get the corresponding index to be used with KissReports
-# Example: contactCreatedIndex <- GetAttributeIndex("Contact created")
-
-# Outputs full list of KM events and properties as a df
-# No parameters needed
-
+#' Attribute (Event and Property) Explorer Functions
+#'
+#' Use GetAttributeList() to get full list of properties and events from KM
+#' @example
+#' attributesList <- GetAttributeList()
 GetAttributeList <- function(){
   # Get list of events from KM
   eventsList <- read(KissEvents())
@@ -22,15 +15,16 @@ GetAttributeList <- function(){
 
   return(fullAttributeList)
 }
-
-# Outputs event/property index used as paramenter in KissReport function
+#'
+#' Outputs event/property index used as paramenter in KissReport function
+#' @example
+#' contactCreatedIndex <- GetAttributeIndex("Contact created")
 GetAttributeIndex <- function(attributeName,
                               productId = "6581c29e-ab13-1030-97f2-22000a91b1a1"){
   fullAttributeList <- GetAttributeList()
 
   attributeIndex <- dplyr::filter(fullAttributeList, display_name == attributeName &
                              product_id == productId)
-
   if(nrow(attributeIndex) == 1){
     attributeIndex <- as.numeric(attributeIndex$index)
     return(attributeIndex)
@@ -43,8 +37,10 @@ GetAttributeIndex <- function(attributeName,
                 "for full list of attributes (display_name column)."))
   }
 }
-
-# Output event/property name from index number
+#'
+#' Output event/property name from index number as data frame
+#' @example
+#' contactCreatedIndex <- GetAttributeName(6)
 GetAttributeName <- function(attributeIndex,
                               productId = "6581c29e-ab13-1030-97f2-22000a91b1a1"){
   fullAttributeList <- GetAttributeList()

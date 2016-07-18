@@ -17,19 +17,21 @@
 #' @param negate Unclear what this does - defaults to \code{FALSE}
 #'
 #' @examples
-#'    firstTimeVisitedCalculation <- KissCalculation.Event(
-#'                      label = "First time of visited site",
-#'                      eventId = 6,
-#'                      type = "first_date_in_range")
-#'    lastTimeVisitedCalculation <- KissCalculation.Event(
-#'                      label = "Last time of visited site",
-#'                      eventId = 6,
-#'                      type = "last_date_in_range")
 #'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
 #'    rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value"))
 #'    segment <- KissSegment(type = "and",
 #'                 rules = rules,
 #'                 defaultInterval = reportDates)
+#'    firstTimeVisitedCalculation <- KissCalculation.Event(
+#'                      label = "First time of visited site",
+#'                      eventId = 6,
+#'                      type = "first_date_in_range",
+#'                      interval = reportDates)
+#'    lastTimeVisitedCalculation <- KissCalculation.Event(
+#'                      label = "Last time of visited site",
+#'                      eventId = 6,
+#'                      type = "last_date_in_range",
+#'                      interval = reportDates)
 #'    report <- KissReport(productId = "6581c29e-ab13-1030-97f2-22000a91b1a1",
 #'                 segment = segment,
 #'                 calculations = list(
@@ -81,15 +83,17 @@ KissCalculation.Event <- function(label,
 #' @param negate Unclear what this does - defaults to \code{FALSE}
 #'
 #' @examples
+#'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
 #'    firstCampaignSourceCalculation <- KissCalculation.Property(
 #'                      label = "First campaign source",
 #'                      propertyId = 7,
-#'                      type = "first_value_in_range")
+#'                      type = "first_value_in_range",
+#'                      interval = reportDates)
 #'    lastCampaignSourceCalculation <- KissCalculation.Property(
 #'                      label = "Last campaign source",
 #'                      propertyId = 7,
-#'                      type = "last_value_in_range")
-#'    reportDates <- lubridate::interval(as.Date("2015-06-01"), as.Date("2015-06-02"))
+#'                      type = "last_value_in_range",
+#'                      interval = reportDates)
 #'    rules <- list(KissRule.Event(FALSE, 72, 1, "at_least", "any_value"))
 #'    segment <- KissSegment(type = "and",
 #'                 rules = rules,
